@@ -1,12 +1,7 @@
 ---
 title: "Final Assignment: Comparison of US and Russian Discourse on Chechnya"
 author: "Mariam Mouldin (Khamidova)"
-output:
-  html_document:
-    toc: true
-    number_sections: true
-  md_document:
-    variant: markdown_github
+output: md_document
 ---
 
 ```{r setup, include=FALSE}
