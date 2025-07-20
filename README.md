@@ -1,10 +1,4 @@
-Final Assignment: Comparison of US and Russian Discourse on Chechnya and
-Ukraine
-================
-Mariam Mouldin (Khamidova)
-2025-07-19
-
-\##Collecting the data##
+##Collecting the data##
 
 1.  US - Chechnya
 
@@ -13,7 +7,7 @@ search_urls <- c("https://www.presidency.ucsb.edu/advanced-search?field-keywords
                  "https://www.presidency.ucsb.edu/advanced-search?field-keywords=Chechnya&field-keywords2=&field-keywords3=&from%5Bdate%5D=01-01-1999&to%5Bdate%5D=12-31-2002&person2=200298&category2%5B0%5D=&items_per_page=25&page=1",
                  "https://www.presidency.ucsb.edu/advanced-search?field-keywords=Chechnya&field-keywords2=&field-keywords3=&from%5Bdate%5D=01-01-1999&to%5Bdate%5D=12-31-2002&person2=200298&category2%5B0%5D=&items_per_page=25&page=2")
 
-#presidency project made it easy to collect the data
+#the presidency project made it easy to collect the data
 
 get_links_from_page <- function(url) {
   page <- read_html(url)
@@ -47,11 +41,11 @@ scrape_document <- function(url) {
     url = url)}
 
 clinton_chechnya_docs <- map_dfr(all_links, scrape_document)
-write_csv(clinton_chechnya_docs, "us_chechnya_clinton_full.csv")
+file.rename("us_chechnya_clinton_full.csv", "data/us_chechnya_clinton_full.csv")
 
 clinton_chechnya <- clinton_chechnya_docs %>%
   filter(str_detect(str_to_lower(text), "chechnya|chechen"))
-write_csv(clinton_chechnya, "us_chechnya_clinton.csv")
+write_csv(clinton_chechnya, "data/us_chechnya_clinton.csv")
 print(clinton_chechnya)
 ```
 
@@ -87,7 +81,7 @@ scrape_bush_doc <- function(url) {
 
 bush_chechnya_docs <- map_dfr(full_links, scrape_bush_doc)
 print(bush_chechnya_docs)
-write_csv(bush_chechnya_docs, "us_chechnya_bush.csv")
+write_csv(bush_chechnya_docs, "data/us_chechnya_bush.csv")
 ```
 
 ``` r
@@ -129,7 +123,7 @@ page <- read_html(url)
     text = text,
     url = url)}
 albright_archive <- map_dfr(archived_urls, scrape_wayback)
-write_csv(albright_archive, "us_chechnya_albright_archive.csv")
+write_csv(albright_archive, "data/us_chechnya_albright_archive.csv")
 print(albright_archive)
 ```
 
@@ -178,29 +172,29 @@ page <- tryCatch(
     url = url)}
 
 powell_archive <- map_dfr(powell_urls, scrape_wayback)
-write_csv(powell_archive, "us_chechnya_powell_archive.csv")
+write_csv(powell_archive, "data/us_chechnya_powell_archive.csv")
 print(powell_archive)
 ```
 
 ``` r
-clinton <- read_csv("us_chechnya_clinton.csv") %>%
+clinton <- read_csv("data/us_chechnya_clinton.csv") %>%
   mutate(date = as.character(date))
 
-bush <- read_csv("us_chechnya_bush.csv") %>%
+bush <- read_csv("data/us_chechnya_bush.csv") %>%
   mutate(date = as.character(date))
 
-albright <- read_csv("us_chechnya_albright_archive.csv") %>%
+albright <- read_csv("data/us_chechnya_albright_archive.csv") %>%
   mutate(date = as.character(date))
 
-powell <- read_csv("us_chechnya_powell_archive.csv") %>%
+powell <- read_csv("data/us_chechnya_powell_archive.csv") %>%
   mutate(date = as.character(date))
 
 us_chechnya <- bind_rows(clinton, bush, albright, powell)
 
-write_csv(us_chechnya, "us_chechnya.csv")
+write_csv(us_chechnya, "data/us_chechnya.csv")
 ```
 
-2.  Russia - Chechnya
+1.  Russia - Chechnya
 
 ``` r
 putin_urls <- c(
@@ -315,24 +309,24 @@ putin_data <- map_dfr(putin_urls, scrape_putin)
 putin_chechnya <- putin_data %>%
   filter(str_detect(str_to_lower(text), "chechnya|chechen|чечн(я|ец|цы|ский|ские)?"))
 
-write_csv(putin_chechnya, "russia_chechnya_putin.csv")
+write_csv(putin_chechnya, "data/russia_chechnya_putin.csv")
 print(putin_chechnya)
 ```
 
 ``` r
-putin <- read_csv("russia_chechnya_putin.csv") %>%
+putin <- read_csv("data/russia_chechnya_putin.csv") %>%
   mutate(date = as.character(date))
 
-ivanov <- read_csv("russia_chechnya_ivanov.csv") %>%
+ivanov <- read_csv("data/russia_chechnya_ivanov.csv") %>%
   mutate(date = as.character(date))
 
 #Ivanov file had to be scraped manually, no findings on the Wayback Machine 
 
 russia_chechnya <- bind_rows(putin, ivanov)
-write_csv(russia_chechnya, "russia_chechnya.csv")
+write_csv(russia_chechnya, "data/russia_chechnya.csv")
 ```
 
-3.  US - Ukraine
+1.  US - Ukraine
 
 ``` r
 search_urls <- c("https://www.presidency.ucsb.edu/advanced-search?field-keywords=Ukraine&field-keywords2=&field-keywords3=&from%5Bdate%5D=02-22-2022&to%5Bdate%5D=01-20-2025&person2=200320&category2%5B%5D=74&category2%5B%5D=68&items_per_page=25",
@@ -375,11 +369,11 @@ scrape_document <- function(url) {
     url = url)}
 
 biden_ukraine_docs <- map_dfr(all_links, scrape_document)
-write_csv(biden_ukraine_docs, "us_ukraine_biden_docs.csv")
+write_csv(biden_ukraine_docs, "data/us_ukraine_biden_docs.csv")
 
 biden_ukraine <- biden_ukraine_docs %>%
   filter(str_detect(str_to_lower(text), "ukrain"))
-write_csv(biden_ukraine, "us_ukraine_biden.csv")
+write_csv(biden_ukraine, "data/us_ukraine_biden.csv")
 print(biden_ukraine)
 ```
 
@@ -423,7 +417,7 @@ blinken_data <- map_dfr(blinken_urls, scrape_blinken)
 blinken_ukraine <- blinken_data %>%
   filter(str_detect(str_to_lower(text), "ukrain"))
 
-write_csv(blinken_ukraine, "us_ukraine_blinken.csv")
+write_csv(blinken_ukraine, "data/us_ukraine_blinken.csv")
 print(blinken_ukraine)
 ```
 
@@ -454,7 +448,7 @@ scrape_trump <- function(url) {
 
 trump_ukraine <- map_dfr(trump_urls, scrape_trump) %>%
   filter(str_detect(str_to_lower(text), "ukrain"))
-write_csv(trump_ukraine, "us_ukraine_trump.csv")
+write_csv(trump_ukraine, "data/us_ukraine_trump.csv")
 head(trump_ukraine) 
 ```
 
@@ -483,28 +477,28 @@ rubio_data <- map_dfr(rubio_urls, scrape_rubio)
 rubio_ukraine <- rubio_data %>%
   filter(str_detect(str_to_lower(text), "ukrain"))
 
-write_csv(rubio_ukraine, "us_ukraine_rubio.csv")
+write_csv(rubio_ukraine, "data/us_ukraine_rubio.csv")
 print(rubio_ukraine)
 ```
 
 ``` r
-biden <- read_csv("us_ukraine_biden.csv") %>%
+biden <- read_csv("data/us_ukraine_biden.csv") %>%
   mutate(date = as.character(date))
 
-blinken <- read_csv("us_ukraine_blinken.csv") %>%
+blinken <- read_csv("data/us_ukraine_blinken.csv") %>%
   mutate(date = as.character(date))
 
-trump <- read_csv("us_ukraine_trump.csv") %>%
+trump <- read_csv("data/us_ukraine_trump.csv") %>%
   mutate(date = as.character(date))
 
-rubio <- read_csv("us_ukraine_rubio.csv") %>%
+rubio <- read_csv("data/us_ukraine_rubio.csv") %>%
   mutate(date = as.character(date))
 
 us_ukraine <- bind_rows(biden, blinken, trump, rubio)
-write_csv(us_ukraine, "us_ukraine.csv")
+write_csv(us_ukraine, "data/us_ukraine.csv")
 ```
 
-4.  Russia - Ukraine
+1.  Russia - Ukraine
 
 ``` r
 putin_urls <- c(
@@ -555,7 +549,7 @@ keywords_pattern <- "украин|донбас|луганск|днр|лнр|ки
 putin_ukraine <- putin_clean %>%
   filter(str_detect(str_to_lower(text), keywords_pattern))
 
-write_csv(putin_ukraine, "russia_ukraine_putin.csv")
+write_csv(putin_ukraine, "data/russia_ukraine_putin.csv")
 print(putin_ukraine)  
 ```
 
@@ -609,13 +603,13 @@ keywords <- "украин|донбас|луганск|днр|лнр|киев|з�
 lavrov_ukraine <- lavrov_clean %>%
   filter(str_detect(str_to_lower(text), keywords))
 
-write_csv(lavrov_ukraine, "lavrov_ukraine.csv")
+write_csv(lavrov_ukraine, "data/lavrov_ukraine.csv")
 print(lavrov_ukraine)
 ```
 
 ``` r
-scraped <- read_csv("lavrov_ukraine.csv", col_types = cols(date = col_character()))
-manual <- read_csv("lavrov_ukraine_manual.csv", col_types = cols(date = col_character()))
+scraped <- read_csv("data/lavrov_ukraine.csv", col_types = cols(date = col_character()))
+manual <- read_csv("data/lavrov_ukraine_manual.csv", col_types = cols(date = col_character()))
 
 #since I was only able to scrape a limited amount of data, additional information was collected manually
 
@@ -633,24 +627,24 @@ manual_full <- manual %>%
 
 lavrov_ukraine_combined <- bind_rows(scraped_full, manual_full)
 
-write_csv(lavrov_ukraine_combined, "lavrov_ukraine_combined.csv")
+write_csv(lavrov_ukraine_combined, "data/lavrov_ukraine_combined.csv")
 head(lavrov_ukraine_combined)
 ```
 
 ``` r
-putin <- read_csv("russia_ukraine_putin.csv", col_types = cols(date = col_character())) %>%
+putin <- read_csv("data/russia_ukraine_putin.csv", col_types = cols(date = col_character())) %>%
   mutate(date = as.character(date))
 
-lavrov <- read_csv("lavrov_ukraine_combined.csv", col_types = cols(date = col_character())) %>%
+lavrov <- read_csv("data/lavrov_ukraine_combined.csv", col_types = cols(date = col_character())) %>%
   mutate(date = as.character(date))
 
 russia_ukraine <- bind_rows(putin, lavrov)
 
 russia_ukraine <- bind_rows(putin, lavrov)
-write_csv(russia_ukraine, "russia_ukraine.csv")
+write_csv(russia_ukraine, "data/russia_ukraine.csv")
 ```
 
-\##Cleaning and tokenizing the data##
+##Cleaning and tokenizing the data##
 
 ``` r
 us_ukraine <- us_ukraine %>%
@@ -716,7 +710,7 @@ cleaned_tokens %>%
     ## 10 efforts         829
     ## # ℹ 37,364 more rows
 
-\##Analysis and visualization##
+##Analysis and visualization##
 
 ``` r
 nrc <- get_sentiments("nrc")
@@ -740,7 +734,7 @@ normalized_avg_sentiment <- normalized_sentiment %>%
   group_by(country, conflict, sentiment) %>%
   summarise(avg_sentiment_per_1000 = mean(sentiment_per_1000), .groups = "drop")
 
-ggplot(normalized_avg_sentiment, aes(x = sentiment, y = avg_sentiment_per_1000, fill = country)) +
+nrc_plot <- ggplot(normalized_avg_sentiment, aes(x = sentiment, y = avg_sentiment_per_1000, fill = country)) +
   geom_col(position = "dodge") +
   facet_wrap(~ conflict) +
   theme_minimal() +
@@ -752,11 +746,32 @@ ggplot(normalized_avg_sentiment, aes(x = sentiment, y = avg_sentiment_per_1000, 
   ) +
   scale_fill_brewer(palette = "Set1") +
 theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+nrc_plot
 ```
 
-![](README_files/figure-gfm/sentiment%20analysis%20and%20visualization-1.png)<!-- -->
+![](README_files/figure-markdown_github/sentiment%20analysis%20and%20visualization-1.png)
 
-*Interesting, but not too informative!*
+``` r
+ggsave("img/nrc_sentiment_by_country_conflict.png", plot = nrc_plot, dpi = 300)
+```
+
+*In reference to Chechnya, the US discourse demonstrates significantly
+higher usage of positive sentiment and trust words. Russian discourse
+also includes a high number of trust words, but also shows negative
+sentiment. Negative emotions like anger, fear, and sadness are
+relatively balanced between the two countries, but slightly higher in
+Russian rhetoric. In reference to Ukraine, the US again demonstrates a
+high number of positive sentiment and trust words. Russian discourse
+also contains a high number of trust words, but again with negative
+sentiment. Other sentiments that dominate in both countries are anger,
+anticipation and fear. Russia shows anger, disgust, negative sentiment,
+while also showing more positive sentiment and sadness on Chechnya than
+on Ukraine. The US demonstrates more positive sentiment, joy and
+surprise regarding Chechnya than Ukraine, and slightly more fear and
+anger in relation to Ukraine than Chechnya. Overall, the analysis
+demonstrates that Russia uses far less emotive language in the official
+rhetoric than the US does.*
 
 ``` r
 #the output contained many meaningless words, so I realized that further cleaning is necessary
@@ -765,7 +780,7 @@ unwanted_words <- c(
   "Lockhart", "lockhart", "gumbel", "atlantik", "парашютно", "vance", "slovakia", "digital", "провел", "магомед", "гудермесе", "докладывать", "доложено", "жителя", "максимальное", "произошедших", "russert", "advertisement","полка", "january", "content", "berger", "сергей", "rice", "germany", "remarks", "заместителю", "провести", "церемонии", "владимиру", "поручил", "путину", "трех", "человека", "прав", "й", "шос", "ташухаджиевых", "цагараев", "woodruff", "yeltsin", "gonna", "чечни", "июня", "ll", "bryant", "archived", "местных", "оказать", "netherlands", "aspen", "bruecke", "cet", "marshall", "грозный", "statedept", "курской", "helsinki", "blinken", "путин", "прибыл", "cards", "sergey", "gov", "websites", "broker", "совещание", "thirty", "семьи", "carlson", "tucker", "schweid", "президента", "кавказе", "северном", "eventsandtravel", "получили", "media", "alright", "eet", "homepage", "youtube", "председатель", "федеральной", "epstein", "выразил", "благодарность", "душанбе", "кардинальные", "комплексное", "комплексные", "окончании", "остановку", "произошли", "северокавказских", "dr", "владимир", "результате", "t", "вручил", "сайди", "цагараева", "современных", "villepin", "coordinated", "loudly", "streamed", "israelis", "austin", "wired", "s", "zelenskyy", "georgian", "федерации", "aartsen", "van", "андрей", "белоусов", "разделе", "чечне", "city", "афганистана", "совета", "тысяч", "председателя", "republic", "spokesperson", "finnish", "hall",  "highlight", "registered", "президент", "ходе", "моздоке", "подчеркнул",  "принимал", "словам", "экономического", "области", "greece", "internet",  "gedda", "priebus", "семье", "shaw",
 "bulgaria", "thankful", "biden",  "caucasus", "obama", "designation", "joe", "дел", "используют",  "аэропорту", "бюджетной", "виктору", "властями", "журналистам",  "задолженности", "запланированное", "зарплате", "касьянову", "командным", "машиной", "михаилу", "намерен", "пилота", "полета", "прекративших", "премьерами", "работникам", "селекторное", "су", "управлял", "христенко", "благородную", "брошенный", "выводится", "выполнили", "командир",  "кострому", "лейтенант", "майоров", "месту", "understandings", "groups", "aligned", "maskhadov", "десантно", "постоянными", "вдв", "иванов", "володин", "вайно", "антон", "speech", "inctitute", "est", "notice", "j", "german", "function", "antony", "monitoring", "экологии", "десантного", "природоохранной", "дмитрий", "директор", "валентина", "бортников", "institute", "viewing", "thursday", "press", "office", "online", "fund", "archive", "полк", "медведев", "матвиенко", "лавров", "колокольцев","дополнительные", "updated", "berlin", "tags", "https", "host", "directories", "bureaus", "please", "information", "chilly", "offices", "links", "administrative", "site", "deliver", "edit", "нарышкин", "мишустин", "михаил", "министр", "вячеслав", "александр", "транспорта", "деятельности", "членами", "представитель", "внешней", "contact", "live", "official", "hosted", "пострадавшим", "вывод","содействие","правоохранительного","российской","думы","внутренних","службы","current", "channel","coverage","released","mission","partnership","secure","promises", "вывода", "государственной", "вопросам", "администрации", "бортникову", "белоусову", "андрею", "areas", "edt", "обсудим", "исполняется", "директору", "взаимных", "васильевичу", "co", "pre", "рэмовичу", "рэмовичминистр", "приступим", "исполняются","терактов","гражданскими","амнистии","истребителе","ранения","расследования","вопрос","правительства","иностранных","оборонны","sensitive","history","policy","relations","durable","american","leadership", "новости", "забудут", "взвода", "важный", "борисовичспециальный", "александру", "friday", "travel", "affairs", "видеосвязи", "викторовичпредседатель", "june", "continued", "комментарии", "эдуардовичруководитель",
 "supported", "анатольевичзаместитель", "александровичминистр", "васильевичдиректор", "апреля", "владимировичпредседатель", "викторовичминистр", "евгеньевичдиректор", "ивановнапредседатель", "митинг", "направляясь", "вызов", "герой", "десантный", "обсуждению", "договоренности", "прекращением", "justice", "divide", "nato", "osce", "issues", "state", "territory", "strategic", "failure", "подчеркнута", "владимира", "путина", "жак", "ширак", "нато", "важность", "договорённости", "оперативное", "ударов", "mcclellan", "elect", "georgia", "venediktov", "lithuania", "georgia's", "blitzer", "siewert", "council", "polio", "liz", "truss", "tapper", "evan", "hudson", "monastyrskyy", "состоялся", "разговор", "подразделением", "посвященный", "роман", "событию", "заместитель", "провёл", "специальный", "lehrer", "clinton", "leavy", "turkey", "communist", "belie", "muir", "meyers", "pelley", "finland", "torture", "f", "stephanopoulos", "торжественной", "щетнев", "беседы", "обязанности", "самолета", "нужны", "меры", "украиной", "совещании", "nigeria", "bulgarian", "stoyanov", "pritzker", "ransomware", "boak", "kishida", "judy", "pritzker", "italy", "gcc", "дислокации", "звания", "ответили", "проходил", "catalog", "ua", "разделах", "emphasized", "operational", "verified", "giorgia", "meloni", "sweden", "kingdom", "ales", "bialiatski", "ханкале", "государства", "исполняющий", "руководитель", "задать", "приняли", "monitors", "yesterday's", "holding", "holodomor", "referenda", "passover", "nord", "scholz", "loans", "находился", "сообщил", "связанные", "совет", "уважаемые", "коллеги", "добрый", "greek", "sunday's", "enduring", "accountable", "cri", "republicans", "tonight", "героев", "дивизии", "николай", "слово", "поводу", "участие", "россией", "talbott", "range", "friends", "kishida's", "cia", "погибших", "полгода", "день", "хотел", "очень", "прежде", "face", "zakaria", "congratulate", "kyiv's",
-"первым", "го", "выступления", "стенограммы", "версия", "года", "bombed", "close", "challenges", "detention", "change", "allies", "объединенной", "сюда", "дата", "доступны", "лицензии", "материал", "impartial", "stream", "материалы", "опубликован", "официальный", "публикации", "thanksgiving", "сайт", "сайта", "ссылка", "текстовая", "conversation", "attribution", "http", "commons", "администрация", "ira", "news", "d", "creative", "ms", "lateral", "bi", "applause", "ways", "open ", "год", "задачу", "open", "efforts", "tv", "geneva", "acts", "cycle", "федеральных", "постоянной", "базе", "принял", "главы", "madame", "assets", "events", "prague", "czech", "стал", "пришли", "правительство", "honest", "dutch", "daley", "classrooms", "resolution", "madeleine", "hide", "child", "seemed")
+"первым", "го", "выступления", "стенограммы", "версия", "года", "bombed", "close", "challenges", "detention", "change", "allies", "объединенной", "сюда", "дата", "доступны", "лицензии", "материал", "impartial", "stream", "материалы", "опубликован", "официальный", "публикации", "thanksgiving", "сайт", "сайта", "ссылка", "текстовая", "conversation", "attribution", "http", "commons", "администрация", "ira", "news", "d", "creative", "ms", "lateral", "bi", "applause", "ways", "взрывов", "open", "год", "задачу", "open", "efforts", "tv", "geneva", "acts", "cycle", "федеральных", "постоянной", "базе", "принял", "главы", "madame", "assets", "events", "prague", "czech", "стал", "пришли", "правительство", "honest", "dutch", "daley", "classrooms", "resolution", "madeleine", "hide", "child", "seemed", "марта", "этому", "военной", "которое", "россия", "сил")
 
 #this was quiet a task
 
@@ -781,12 +796,12 @@ tfidf_data <- word_counts %>%
 #forgot the translation part, added later
 
 translation <-c( "терактах" = "terror acts",
-  "взрывов" = "explosions",
   "погибли" = "died",
   "завоеватели" = "conquerors",
   "защитниками" = "defenders",
   "мужество" = "courage",
   "героизм" = "heroism",
+  "экстремистами" = "extremist",
   "разведки" = "intelligence",
   "группировки" = "groups",
   "безопасности" = "security",
@@ -812,7 +827,7 @@ top_tfidf <- top_tfidf %>%
     translation[word],
     word))
 
-top_tfidf %>%
+tfidf_plot <- top_tfidf %>%
   mutate(translated_word = reorder_within(translated_word, tf_idf, list(country, conflict))) %>%
   ggplot(aes(x = tf_idf, y = translated_word, fill = country)) +
   geom_col(show.legend = FALSE) +
@@ -823,11 +838,28 @@ top_tfidf %>%
   labs(
     title = "Top Keywords by Country and Conflict",
     x = "TF-IDF", y = "Keyword")
+
+tfidf_plot
 ```
 
-![](README_files/figure-gfm/additional%20cleaning%20and%20TF-IDF%20by%20Country%20+%20Conflict-1.png)<!-- -->
+![](README_files/figure-markdown_github/additional%20cleaning%20and%20TF-IDF%20by%20Country%20+%20Conflict-1.png)
 
-*Analysis*
+``` r
+ggsave("img/tfidf_keywords_by_country_conflict.png", plot = tfidf_plot, dpi = 300, width = 10, height = 7)
+```
+
+*TF-IDF analysis shows keywords revealing the Russian and US discourse
+on Chechnya and Ukraine. Russian use of terms like “terror acts”,
+“extremist”, “conquerors”, “heroism” and “defended” shows a portrayal of
+Chechnya as a defence against terrorism. The narrative tone is heroic.
+US discourse using terms like “”hizballah”, “qaeda”, “islamic” shows
+linking the conflict to the broader war on terror. The narrative tone is
+terrorism-linked. In relation to Ukraine, Russia uses terms like
+“security”, “threat”, “terrorist”, framing Ukraine as a national
+security issue. The narrative tone is strategic and defensive. The US
+uses terms like “aggression”, “sovereignty”, “democracy”, portraying
+Ukraine as a victim of aggression. The narrative tone is democratic and
+ideological.*
 
 ``` r
 keyword_map <- tribble(
@@ -861,9 +893,99 @@ sentences_df <- df %>%
 sentences_filtered <- sentences_df %>%
   semi_join(keyword_map, by = c("keyword", "country", "conflict"))
 
-write_csv(sentences_filtered, "keyword_sentences_context.csv")
+write_csv(sentences_filtered, "data/keyword_sentences_context.csv")
 ```
 
-*The most important analysis*
+*Interestingly, the US discourse on Chechnya contained the keyword
+“freedom”, but as the context extraction revealed it is not about
+advocating for Chechen self-determination or independence, but focusing
+on individual rights within Russia, such as press freedom and treatment
+of prisoners. For instance, Bill Clinton’s statement on November 12,
+1999 speaks to progress in: “press freedom, democracy, minority rights,
+and the treatment of prisoners…” This reveals that “freedom” refers to
+liberal democratic norms inside Russia, not to political freedom or
+autonomy for Chechnya itself. Clinton’s more direct and powerful remark
+on November 18, 1999, reveales the limits of US critique: “If they had
+put you in jail instead of electing you President, I would hope that
+every leader…would have stood up for you and for freedom in Russia and
+not said, ‘Well, that is an internal Russian affair…’” drawing a line
+between internal affairs and international concern: the US will not
+interfere with Russia’s territorial claims, but will speak out when
+state power becomes abusive, especially if it violates civil or
+democratic rights. A key transformation appears in the post-9/11
+discourse. In a White House press briefing on September 26, 2001,
+reporters challenge the sudden shift in the US labeling of Chechen
+fighters as “terrorists.” The dialogue includes: “All of a sudden,
+you’re calling them terrorists? … Is this what Putin has asked for, in
+exchange for his help?” A clear pivot to counterterrorism rhetoric that
+reflects the US’s new interest in maintaining good relationships with
+Russia. The US framing of Ukraine suggests that Ukraine’s defense is not
+just national, it’s existential for the liberal international order.
+Blinken states: “Everything that we and our allies and partners do… has
+the same purpose: to help Ukraine defend its sovereignty… and to stand
+up for the international rules and principles…” This casts Russia’s
+invasion as a threat not just to Ukraine, but to global order. In stark
+contrast, Russia’s framing centering on its “security” and perceived
+threats. In Vladimir Putin’s speech on February 21, 2022, he warns:
+“Если Россия столкнётся с такой угрозой, как принятие Украины в НАТО…
+угрозы для нашей страны многократно возрастут.” (If Russia faces such a
+threat as Ukraine joining NATO, the threats to our country will increase
+many times over.) Here, Putin flips the narrative: Ukraine’s sovereignty
+is seen as an existential threat to Russian national security. He
+further grounds this in international language: “…принцип равной и
+неделимой безопасности… не укреплять свою безопасность за счёт
+безопасности других государств.” (The principle of equal and indivisible
+security… not strengthening one’s security at the expense of others.)
+Here, Putin uses multilateral language to argue that Western support for
+Ukraine violates Russia’s right to security, thus reframing the
+aggressor as the aggrieved. The US response offers a perspective that is
+different from Russia’s, but also not the same between the two cases
+themselves, shifting on sovereignty, religious framing, and geopolitical
+motivations between the two conflicts.*
 
-\##Reflection##
+##Reflection##
+
+Time Window: Chechnya: 1999–2002 (shortened for this assignment) and
+Ukraine: 2022–present.
+
+Sources:
+
+US Narrative: Speeches, statements, and interviews from Presidents
+Clinton (until January 2001) and Bush(from January 2001) on Chechnya,
+and Presidents Biden (until January 2025) and Trump(from January 2005)
+on Ukraine. Additional briefings and interviews include Secretary of
+State Albright(until January 2001) and Powell (extended to 2003 for
+Powell due to limited documents) on Chechnya, and Blinken and Rubio on
+Ukraine. Data was collected from official websites (WhiteHouse.gov and
+State.gov) using the Wayback Machine.
+
+Russian Narrative: Statements and interviews of President Putin on
+Chechnya and Ukraine, as well as statements and interviews of Foreign
+Ministers Igor Ivanov (Chechnya) and Sergey Lavrov (Ukraine). Data was
+sourced from Kremlin.ru and Mid.ru via the Wayback Machine. Notes: Boris
+Yeltsin is excluded because Kremlin.ru archives start only from December
+31, 1999, with the first document mentioning his stepping down and
+handing over the presidency to Putin. Igor Ivanov’s data was manually
+compiled because Mid.ru blocks automated scraping and the Wayback
+Machine does not have these URLs. Sergey Lavrov’s data was also scraped
+and collected manually due to restrictions on Mid.ru. Some collected
+data is in English; some is in Russian.
+
+Translation bias: Russian data was manually translated by the author to
+preserve rhetorical framing and tone, which could have been lost in
+automated translation tools.
+
+Corpus Imbalance. The dataset consists of: Chechnya: U.S. discourse: 111
+documents Russian discourse: 45 documents Total: 156 Ukraine: U.S.
+discourse: 183 documents Russian discourse: 18 documents Total: 201
+Total corpus size: 357 documents To address imbalances in corpus size,
+frequencies were normalized per 1,000 words per speech.
+
+Due to time constraints, only a limited amount of data was collected, so
+any conclusions should be taken with caution.
+
+Data collection posed challenges, especially for Chechnya-related
+materials dating back over 20 years, which may introduce unintentional
+selection bias.
+
+##AI/resources statement
