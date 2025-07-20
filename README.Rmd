@@ -1,39 +1,898 @@
 ---
-title: "homework example"
-author: "Jean Clipperton"
+title: "Final Assignment: Comparison of US and Russian Discourse on Chechnya and Ukraine"
+subtitle: ""
+author: "Mariam Mouldin (Khamidova)"
 date: "`r Sys.Date()`"
 output:
-  github_document:
-    html_preview: TRUE
+  html_document:
+    clean: true
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
 
-```{r opts, echo = FALSE}
-knitr::opts_chunk$set(
-  fig.path = "images/"
-)
+```{r loading, echo = FALSE}
+library(httr)
+library(rvest)
+library(jsonlite)
+library(purrr)
+library(readr)
+library(lubridate)
+library(scales)
+library(viridis)
+library(stopwords)
+library(SnowballC)
+library(tm)
+library(tidytext)
+library(dplyr)
+library(stringr)
+library(textdata)
+library(tokenizers)
+library(tidyverse)
 ```
 
-## R Markdown
+##Collecting the data##
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+1. US - Chechnya
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+```{r, Clinton on Chechnya, eval=FALSE, message=FALSE}
+search_urls <- c("https://www.presidency.ucsb.edu/advanced-search?field-keywords=Chechnya&field-keywords2=&field-keywords3=&from%5Bdate%5D=01-01-1999&to%5Bdate%5D=12-31-2002&person2=200298&category2%5B0%5D=&items_per_page=25",
+                 "https://www.presidency.ucsb.edu/advanced-search?field-keywords=Chechnya&field-keywords2=&field-keywords3=&from%5Bdate%5D=01-01-1999&to%5Bdate%5D=12-31-2002&person2=200298&category2%5B0%5D=&items_per_page=25&page=1",
+                 "https://www.presidency.ucsb.edu/advanced-search?field-keywords=Chechnya&field-keywords2=&field-keywords3=&from%5Bdate%5D=01-01-1999&to%5Bdate%5D=12-31-2002&person2=200298&category2%5B0%5D=&items_per_page=25&page=2")
 
-```{r cars}
-summary(cars)
+#the presidency project made it easy to collect the data
+
+get_links_from_page <- function(url) {
+  page <- read_html(url)
+
+links <- page %>%
+  html_nodes("a") %>%
+  html_attr("href") %>%
+  str_subset("^/documents/") %>%
+  str_subset("guidebook|category-attributes", negate = TRUE) %>%  
+  unique()
+
+full_links <- paste0("https://www.presidency.ucsb.edu", links)
+return(full_links)}
+
+all_links <- map(search_urls, get_links_from_page) %>% unlist() %>% unique()
+cat("Found", length(all_links), "documents\n")
+
+scrape_document <- function(url) {
+  Sys.sleep(1)  
+  page <- read_html(url)
+  
+  title <- page %>% html_node("h1") %>% html_text(trim = TRUE)
+  date <- page %>% html_node(".date-display-single") %>% html_text(trim = TRUE)
+  text <- page %>% html_node(".field-docs-content") %>% html_text(trim = TRUE)
+  
+  tibble(
+    speaker = "Bill Clinton",
+    date = date,
+    title = title,
+    text = text,
+    url = url)}
+
+clinton_chechnya_docs <- map_dfr(all_links, scrape_document)
+file.rename("us_chechnya_clinton_full.csv", "data/us_chechnya_clinton_full.csv")
+
+clinton_chechnya <- clinton_chechnya_docs %>%
+  filter(str_detect(str_to_lower(text), "chechnya|chechen"))
+write_csv(clinton_chechnya, "data/us_chechnya_clinton.csv")
+print(clinton_chechnya)
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+```{r, Bush on Chechnya, eval=FALSE, message=FALSE}
+base_url <- "https://www.presidency.ucsb.edu/advanced-search?field-keywords=Chechnya&field-keywords2=&field-keywords3=&from%5Bdate%5D=01-01-1999&to%5Bdate%5D=12-31-2002&person2=200299&category2%5B%5D=&items_per_page=25"
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+search_page <- read_html(base_url)
+
+links <- search_page %>%
+  html_nodes("a") %>%
+  html_attr("href") %>%
+  str_subset("^/documents/") %>%
+  str_subset("guidebook|category-attributes", negate = TRUE) %>%
+  unique()
+
+full_links <- paste0("https://www.presidency.ucsb.edu", links)
+print(full_links)
+
+scrape_bush_doc <- function(url) {
+  Sys.sleep(1)  
+  page <- read_html(url)
+  
+  title <- page %>% html_node("h1") %>% html_text(trim = TRUE)
+  date <- page %>% html_node(".date-display-single") %>% html_text(trim = TRUE)
+  text <- page %>% html_node(".field-docs-content") %>% html_text(trim = TRUE)
+  
+  tibble(
+    speaker = "George W. Bush",
+    date = date,
+    title = title,
+    text = text,
+    url = url)}
+
+bush_chechnya_docs <- map_dfr(full_links, scrape_bush_doc)
+print(bush_chechnya_docs)
+write_csv(bush_chechnya_docs, "data/us_chechnya_bush.csv")
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r, Albright on Chechnya, eval=FALSE, message=FALSE}
+archived_urls <- c(
+  "https://web.archive.org/web/20010203173100/https://1997-2001.state.gov/statements/1999/991210b.html",
+  "https://web.archive.org/web/20010203173300/https://1997-2001.state.gov/statements/1999/991217b.html",
+  "https://web.archive.org/web/20010121100800/https://1997-2001.state.gov/statements/2000/000208b.html",
+  "https://web.archive.org/web/20010407153633/https://1997-2001.state.gov/statements/2000/000202a.html",
+  "https://web.archive.org/web/20010407153856/https://1997-2001.state.gov/statements/2000/000326a.html",
+  "https://web.archive.org/web/20010407153444/https://1997-2001.state.gov/statements/1999/991122d.html",
+  "https://web.archive.org/web/20010407153533/https://1997-2001.state.gov/statements/1999/991026.html",
+  "https://web.archive.org/web/20010407153234/https://1997-2001.state.gov/statements/2000/000102.html",
+  "https://web.archive.org/web/20010407153216/https://1997-2001.state.gov/statements/1999/991212.html")
+
+#state.gov didn't allow to scrape, so I had to look for each link on the Wayback Machine
+
+scrape_wayback <- function(url) {
+  Sys.sleep(1)
+  
+page <- read_html(url)
+  
+  if (is.null(page)) return(tibble())
+
+  title <- page %>%
+    html_node("title") %>%
+    html_text(trim = TRUE)
+
+  text <- page %>%
+    html_nodes("p") %>%
+    html_text(trim = TRUE) %>%
+    paste(collapse = "\n\n")
+
+  date <- str_extract(url, "\\d{8}")
+  
+    tibble(
+    speaker = "Madeleine Albright",
+    date = date,
+    title = title,
+    text = text,
+    url = url)}
+albright_archive <- map_dfr(archived_urls, scrape_wayback)
+write_csv(albright_archive, "data/us_chechnya_albright_archive.csv")
+print(albright_archive)
+```
+
+
+```{r, Powell on Chechnya, eval=FALSE}
+powell_urls <- c(
+  "https://web.archive.org/web/20030501010101/https://2001-2009.state.gov/secretary/former/powell/remarks/2003/20665.htm",
+  "https://web.archive.org/web/20030601104120/https://2001-2009.state.gov/secretary/former/powell/remarks/36076.htm",
+  "https://web.archive.org/web/20020126092813/https://2001-2009.state.gov/secretary/former/powell/remarks/2001/dec/6750.htm",
+  "https://web.archive.org/web/20030501010305/https://2001-2009.state.gov/secretary/former/powell/remarks/2003/20571.htm",
+  "https://web.archive.org/web/20030709102408/https://2001-2009.state.gov/secretary/former/powell/remarks/2003/17300.htm",
+  "https://web.archive.org/web/20030821054856/https://2001-2009.state.gov/secretary/former/powell/remarks/28522.htm",
+  "https://web.archive.org/web/20030620041742/https://2001-2009.state.gov/p/eur/rls/rm/2002/10034.htm",
+  "https://web.archive.org/web/20020926023852/https://2001-2009.state.gov/secretary/former/powell/remarks/2001/5427.htm",
+  "https://web.archive.org/web/20030709101427/https://2001-2009.state.gov/secretary/former/powell/remarks/28163.htm",
+  "https://web.archive.org/web/20031203005312/https://2001-2009.state.gov/r/pa/prs/ps/2003/18067.htm",
+  "https://web.archive.org/web/20030709101847/https://2001-2009.state.gov/secretary/former/powell/remarks/28495.htm",
+  "https://web.archive.org/web/20030709093723/https://2001-2009.state.gov/secretary/former/powell/remarks/35982.htm",
+  "https://web.archive.org/web/20020822105245/https://2001-2009.state.gov/secretary/former/powell/remarks/2001/4962.htm",
+  "https://web.archive.org/web/20030821055119/https://2001-2009.state.gov/secretary/former/powell/remarks/2003/23836.htm")
+
+scrape_wayback <- function(url) {
+  Sys.sleep(1)
+  
+page <- tryCatch(
+    read_html(GET(url)),
+    error = function(e) return(NULL))
+  
+  if (is.null(page)) return(tibble())
+  
+  title <- page %>%
+    html_node("title") %>%
+    html_text(trim = TRUE)
+
+  text <- page %>%
+    html_nodes("p") %>%
+    html_text(trim = TRUE) %>%
+    paste(collapse = "\n\n")
+
+  date <- str_extract(url, "\\d{8}")
+
+    tibble(
+    speaker = "Colin Powell",
+    date = date,
+    title = title,
+    text = text,
+    url = url)}
+
+powell_archive <- map_dfr(powell_urls, scrape_wayback)
+write_csv(powell_archive, "data/us_chechnya_powell_archive.csv")
+print(powell_archive)
+```
+
+```{r, US - Chechnya, message=FALSE}
+clinton <- read_csv("data/us_chechnya_clinton.csv") %>%
+  mutate(date = as.character(date))
+
+bush <- read_csv("data/us_chechnya_bush.csv") %>%
+  mutate(date = as.character(date))
+
+albright <- read_csv("data/us_chechnya_albright_archive.csv") %>%
+  mutate(date = as.character(date))
+
+powell <- read_csv("data/us_chechnya_powell_archive.csv") %>%
+  mutate(date = as.character(date))
+
+us_chechnya <- bind_rows(clinton, bush, albright, powell)
+
+write_csv(us_chechnya, "data/us_chechnya.csv")
+```
+
+2. Russia - Chechnya
+
+```{r, Putin on Chechnya, eval=FALSE}
+putin_urls <- c(
+  "https://web.archive.org/web/20000321000000/https://kremlin.ru/events/president/news/38776",
+  "https://web.archive.org/web/20000321010000/https://kremlin.ru/events/president/news/38841",
+  "https://web.archive.org/web/20000401000000/https://kremlin.ru/events/president/transcripts/21355",
+  "https://web.archive.org/web/20000706000000/https://kremlin.ru/events/president/news/38339",
+  "https://web.archive.org/web/20020401000000/https://kremlin.ru/events/president/news/41988",
+  "https://web.archive.org/web/20000105000000/https://kremlin.ru/events/president/transcripts/24123",
+  "https://web.archive.org/web/20010515090000/https://kremlin.ru/events/president/transcripts/24066",
+  "https://web.archive.org/web/20010124120000/https://kremlin.ru/events/president/news/41694",
+  "https://web.archive.org/web/20010801083000/https://kremlin.ru/events/president/news/45012",
+  "https://web.archive.org/web/20021110120000/https://kremlin.ru/events/president/transcripts/21770",
+  "https://web.archive.org/web/20021205080000/https://kremlin.ru/events/president/news/50021",
+  "https://web.archive.org/web/20021015000000/https://kremlin.ru/events/president/transcripts/21939",
+  "https://web.archive.org/web/20030410070000/https://kremlin.ru/events/president/news/55033",
+  "https://web.archive.org/web/20031120090000/https://kremlin.ru/events/president/news/57555",
+  "https://web.archive.org/web/20250702051109/http://www.kremlin.ru/events/president/transcripts/24194",
+  "https://web.archive.org/web/20250429221314/http://www.kremlin.ru/events/president/transcripts/24197",
+  "https://web.archive.org/web/20250627011003/http://www.kremlin.ru/events/president/transcripts/24186",
+  "https://web.archive.org/web/20250713085143/http://www.kremlin.ru/events/president/transcripts/24187",
+  "https://web.archive.org/web/20241202181833/http://www.kremlin.ru/events/president/news/39010",
+  "https://web.archive.org/web/20250425230104/http://www.kremlin.ru/events/president/news/38982",
+  "https://web.archive.org/web/20250424102952/http://www.kremlin.ru/events/president/news/39021",
+  "https://web.archive.org/web/20161021030321/http://www.kremlin.ru/events/president/news/38998",
+  "https://web.archive.org/web/20250522132542/http://www.kremlin.ru/events/president/transcripts/24190",
+  "https://web.archive.org/web/20250622221346/http://www.kremlin.ru/events/president/news/37497",
+  "https://web.archive.org/web/20250515075452/http://www.kremlin.ru/events/president/transcripts/24066",
+  "https://web.archive.org/web/20250617213751/http://www.kremlin.ru/events/president/transcripts/21379",
+  "https://web.archive.org/web/20250418203806/http://www.kremlin.ru/events/president/transcripts/24070",
+  "https://web.archive.org/web/20250522035152/http://www.kremlin.ru/events/president/transcripts/24129",
+  "https://web.archive.org/web/20250418051321/http://www.kremlin.ru/events/president/news/38255",
+  "https://web.archive.org/web/20241104222110/http://www.kremlin.ru/events/president/transcripts/24131",
+  "https://web.archive.org/web/20241007150023/http://www.kremlin.ru/events/president/news/38252",
+  "https://web.archive.org/web/20250210173639/http://www.kremlin.ru/events/president/transcripts/24204",
+  "https://web.archive.org/web/20250617102043/http://www.kremlin.ru/events/president/transcripts/24205",  
+  "https://web.archive.org/web/20250321112955/http://www.kremlin.ru/events/president/transcripts/24214",
+  "https://web.archive.org/web/20250615035409/http://www.kremlin.ru/events/president/transcripts/24167",
+  "https://web.archive.org/web/20250419193221/http://www.kremlin.ru/events/president/transcripts/21484",
+  "https://web.archive.org/web/20250317124321/http://www.kremlin.ru/events/president/transcripts/21480",
+  "https://web.archive.org/web/20250321134054/http://www.kremlin.ru/events/president/transcripts/24171",
+  "https://web.archive.org/web/20250426222902/http://www.kremlin.ru/events/president/transcripts/21512",
+  "https://web.archive.org/web/20250627002315/http://www.kremlin.ru/events/president/transcripts/21558",
+  "https://web.archive.org/web/20250424044544/http://www.kremlin.ru/events/president/transcripts/21643",
+  "https://web.archive.org/web/20250324133545/http://www.kremlin.ru/events/president/transcripts/21634",
+  "https://web.archive.org/web/20250315121848/http://www.kremlin.ru/events/president/news/39422",
+  "https://web.archive.org/web/20250320093917/http://www.kremlin.ru/events/president/transcripts/21139",
+  "https://web.archive.org/web/20250428013437/http://www.kremlin.ru/events/president/transcripts/21149",
+  "https://web.archive.org/web/20250207005501/http://www.kremlin.ru/events/president/transcripts/24352",
+  "https://web.archive.org/web/20250524041130/http://www.kremlin.ru/events/president/transcripts/21201",  
+  "https://web.archive.org/web/20250522140229/http://www.kremlin.ru/events/president/transcripts/24427",
+  "https://web.archive.org/web/20250620111519/http://www.kremlin.ru/events/president/transcripts/21207",
+  "https://web.archive.org/web/20250320060840/http://www.kremlin.ru/events/president/transcripts/21210",
+  "https://web.archive.org/web/20250709004705/http://www.kremlin.ru/events/president/transcripts/21216",
+  "https://web.archive.org/web/20250213203336/http://www.kremlin.ru/events/president/transcripts/24399",
+  "https://web.archive.org/web/20250318115116/http://www.kremlin.ru/events/president/transcripts/24394",
+  "https://web.archive.org/web/20250422221831/http://www.kremlin.ru/events/president/transcripts/21238",
+  "https://web.archive.org/web/20250624080550/http://www.kremlin.ru/events/president/transcripts/21269",
+  "https://web.archive.org/web/20250406090649/http://www.kremlin.ru/events/president/transcripts/21286",
+  "https://web.archive.org/web/20250420075937/http://www.kremlin.ru/events/president/transcripts/21291",
+  "https://web.archive.org/web/20250430180048/http://www.kremlin.ru/events/president/transcripts/21315",
+  "https://web.archive.org/web/20250113161445/http://www.kremlin.ru/events/president/transcripts/21334",
+  "https://web.archive.org/web/20250618232514/http://www.kremlin.ru/events/president/transcripts/21336",
+  "https://web.archive.org/web/20250216165527/http://www.kremlin.ru/events/president/transcripts/21335",
+  "https://web.archive.org/web/20250428001536/http://www.kremlin.ru/events/president/transcripts/21349",
+  "https://web.archive.org/web/20250418110306/http://www.kremlin.ru/events/president/transcripts/21354",
+  "https://web.archive.org/web/20250430102610/http://www.kremlin.ru/events/president/transcripts/21394",
+  "https://web.archive.org/web/20250207031148/http://www.kremlin.ru/events/president/transcripts/21402",
+  "https://web.archive.org/web/20250515184411/http://www.kremlin.ru/events/president/transcripts/21447",
+  "https://web.archive.org/web/20250327134737/http://www.kremlin.ru/events/president/transcripts/21456",
+  "https://web.archive.org/web/20250419123645/http://www.kremlin.ru/events/president/transcripts/21472",
+  "https://web.archive.org/web/20250429010317/http://www.kremlin.ru/events/president/news/26960",
+  "https://web.archive.org/web/20250513203019/http://www.kremlin.ru/events/president/transcripts/21515",
+  "https://web.archive.org/web/20250623172139/http://www.kremlin.ru/events/president/transcripts/21552",
+  "https://web.archive.org/web/20250617211725/http://www.kremlin.ru/events/president/transcripts/24576",
+  "https://web.archive.org/web/20250602061358/http://www.kremlin.ru/events/president/transcripts/21565",
+  "https://web.archive.org/web/20250619055738/http://www.kremlin.ru/events/president/transcripts/21583",
+  "https://web.archive.org/web/20241003235851/http://www.kremlin.ru/events/president/transcripts/21615",
+  "https://web.archive.org/web/20250702053723/http://www.kremlin.ru/events/president/transcripts/21651",  
+  "https://web.archive.org/web/20250516043404/http://www.kremlin.ru/events/president/transcripts/21676",
+  "https://web.archive.org/web/20250612195817/http://www.kremlin.ru/events/president/transcripts/21722",
+  "https://web.archive.org/web/20250524072606/http://www.kremlin.ru/events/president/transcripts/21770",
+  "https://web.archive.org/web/20250523201555/http://www.kremlin.ru/events/president/transcripts/21769",
+  "https://web.archive.org/web/20250522112055/http://www.kremlin.ru/events/president/transcripts/21773",  
+  "https://web.archive.org/web/20250617194922/http://www.kremlin.ru/events/president/transcripts/21774",
+  "https://web.archive.org/web/20250615114551/http://www.kremlin.ru/events/president/transcripts/21775",
+  "https://web.archive.org/web/20250521183903/http://www.kremlin.ru/events/president/transcripts/21793",
+  "https://web.archive.org/web/20250618123216/http://www.kremlin.ru/events/president/transcripts/21818")
+
+#kremlin.ru not only prohibits web scraping, but also restricts document searches to a specific day, so each day had to be checked individually, and then only any related document was looked for on the Wayback Machine
+
+scrape_putin <- function(url) {
+  Sys.sleep(1.5)  
+  page <- tryCatch(read_html(url), error = function(e) NULL)
+  if (is.null(page)) return(tibble())
+  
+  title <- page %>% html_node("h1") %>% html_text(trim = TRUE)
+  text  <- page %>% html_nodes("p") %>% html_text(trim = TRUE) %>% paste(collapse = "\n\n")
+  date  <- page %>% html_node("time") %>% html_attr("datetime")
+  if (is.na(date)) {
+    date <- str_extract(url, "\\d{8}")}
+  
+  tibble(
+    speaker = "Putin",
+    date = date,
+    title = title,
+    text = text,
+    url = url)}
+
+putin_data <- map_dfr(putin_urls, scrape_putin)
+
+putin_chechnya <- putin_data %>%
+  filter(str_detect(str_to_lower(text), "chechnya|chechen|чечн(я|ец|цы|ский|ские)?"))
+
+write_csv(putin_chechnya, "data/russia_chechnya_putin.csv")
+print(putin_chechnya)
+```
+
+
+```{r, Russia - Chechnya, message=FALSE}
+putin <- read_csv("data/russia_chechnya_putin.csv") %>%
+  mutate(date = as.character(date))
+
+ivanov <- read_csv("data/russia_chechnya_ivanov.csv") %>%
+  mutate(date = as.character(date))
+
+#Ivanov file had to be scraped manually, no findings on the Wayback Machine 
+
+russia_chechnya <- bind_rows(putin, ivanov)
+write_csv(russia_chechnya, "data/russia_chechnya.csv")
+```
+
+3. US - Ukraine
+
+```{r, Biden on Ukraine, eval=FALSE}
+search_urls <- c("https://www.presidency.ucsb.edu/advanced-search?field-keywords=Ukraine&field-keywords2=&field-keywords3=&from%5Bdate%5D=02-22-2022&to%5Bdate%5D=01-20-2025&person2=200320&category2%5B%5D=74&category2%5B%5D=68&items_per_page=25",
+                 "https://www.presidency.ucsb.edu/advanced-search?field-keywords=Ukraine&field-keywords2=&field-keywords3=&from%5Bdate%5D=02-22-2022&to%5Bdate%5D=01-20-2025&person2=200320&category2%5B0%5D=74&category2%5B1%5D=68&items_per_page=25&page=1",
+                 "https://www.presidency.ucsb.edu/advanced-search?field-keywords=Ukraine&field-keywords2=&field-keywords3=&from%5Bdate%5D=02-22-2022&to%5Bdate%5D=01-20-2025&person2=200320&category2%5B0%5D=74&category2%5B1%5D=68&items_per_page=25&page=2",
+                 "https://www.presidency.ucsb.edu/advanced-search?field-keywords=Ukraine&field-keywords2=&field-keywords3=&from%5Bdate%5D=02-22-2022&to%5Bdate%5D=01-20-2025&person2=200320&category2%5B0%5D=74&category2%5B1%5D=68&items_per_page=25&page=3",
+                 "https://www.presidency.ucsb.edu/advanced-search?field-keywords=Ukraine&field-keywords2=&field-keywords3=&from%5Bdate%5D=02-22-2022&to%5Bdate%5D=01-20-2025&person2=200320&category2%5B0%5D=74&category2%5B1%5D=68&items_per_page=25&page=4",
+                 "https://www.presidency.ucsb.edu/advanced-search?field-keywords=Ukraine&field-keywords2=&field-keywords3=&from%5Bdate%5D=02-22-2022&to%5Bdate%5D=01-20-2025&person2=200320&category2%5B0%5D=74&category2%5B1%5D=68&items_per_page=25&page=5",
+                 "https://www.presidency.ucsb.edu/advanced-search?field-keywords=Ukraine&field-keywords2=&field-keywords3=&from%5Bdate%5D=02-22-2022&to%5Bdate%5D=01-20-2025&person2=200320&category2%5B0%5D=74&category2%5B1%5D=68&items_per_page=25&page=6")
+
+get_links_from_page <- function(url) {
+  page <- read_html(url)
+
+links <- page %>%
+  html_nodes("a") %>%
+  html_attr("href") %>%
+  str_subset("^/documents/") %>%
+  str_subset("guidebook|category-attributes", negate = TRUE) %>%  
+  unique()
+
+full_links <- paste0("https://www.presidency.ucsb.edu", links)
+return(full_links)}
+
+all_links <- map(search_urls, get_links_from_page) %>% unlist() %>% unique()
+cat("Found", length(all_links), "documents\n")
+
+scrape_document <- function(url) {
+  Sys.sleep(1)  
+  page <- read_html(url)
+  
+  title <- page %>% html_node("h1") %>% html_text(trim = TRUE)
+  date <- page %>% html_node(".date-display-single") %>% html_text(trim = TRUE)
+  text <- page %>% html_node(".field-docs-content") %>% html_text(trim = TRUE)
+  
+  tibble(
+    speaker = "Joe Biden",
+    date = date,
+    title = title,
+    text = text,
+    url = url)}
+
+biden_ukraine_docs <- map_dfr(all_links, scrape_document)
+write_csv(biden_ukraine_docs, "data/us_ukraine_biden_docs.csv")
+
+biden_ukraine <- biden_ukraine_docs %>%
+  filter(str_detect(str_to_lower(text), "ukrain"))
+write_csv(biden_ukraine, "data/us_ukraine_biden.csv")
+print(biden_ukraine)
+```
+
+```{r, Blinken on Ukraine, eval=FALSE}
+blinken_urls <- c(
+  "https://web.archive.org/web/20250215064359/https://2021-2025.state.gov/secretary-blinken-and-secretary-austins-travel-to-ukraine/",
+  "https://web.archive.org/web/20250214224737/https://2021-2025.state.gov/secretary-blinken-to-deliver-a-speech-on-the-crisis-in-ukraine/",
+  "hhttps://web.archive.org/web/20250213154059/https://2021-2025.state.gov/secretary-travel/travel-to-ukraine-and-belgium-september-8-9-2022/",
+  "https://web.archive.org/web/20250214041626/https://2021-2025.state.gov/secretary-antony-j-blinken-and-nato-secretary-general-jens-stoltenberg-at-a-joint-press-availability/",
+  "https://web.archive.org/web/20250212083710/https://2021-2025.state.gov/secretary-blinken-to-deliver-speech-at-helsinki-city-hall/",
+  "https://web.archive.org/web/20250216150059/https://2021-2025.state.gov/secretary-blinkens-remarks-at-the-united-nations-security-council-ministerial-meeting-on-ukraine/",
+  "https://web.archive.org/web/20250213011041/https://2021-2025.state.gov/october-10-briefing-with-ambassador-julianne-smith-u-s-permanent-representative-to-the-north-atlantic-treaty-organization-nato/",
+  "https://web.archive.org/web/20250212083940/https://2021-2025.state.gov/russias-strategic-failure-and-ukraines-secure-future/",
+  "https://web.archive.org/web/20250403171930/https://2021-2025.state.gov/secretary-antony-j-blinken-remarks-to-the-press-31/")
+
+scrape_blinken <- function(url) {
+  Sys.sleep(2) 
+  
+tryCatch({
+    page <- read_html(url)
+
+    title <- page %>% html_node("title") %>% html_text(trim = TRUE)
+
+    text <- page %>%
+      html_nodes("p") %>%
+      html_text(trim = TRUE) %>%
+      paste(collapse = "\n\n")
+
+    tibble(
+      speaker = "Antony Blinken",
+      date = NA_character_,
+      title = title,
+      text = text,
+      url = url)}, 
+    error = function(e) {
+    message("Failed on: ", url)
+    tibble()})}
+
+blinken_data <- map_dfr(blinken_urls, scrape_blinken)
+
+blinken_ukraine <- blinken_data %>%
+  filter(str_detect(str_to_lower(text), "ukrain"))
+
+write_csv(blinken_ukraine, "data/us_ukraine_blinken.csv")
+print(blinken_ukraine)
+```
+
+
+```{r, Trump on Ukraine, eval=FALSE}
+trump_urls <- c(
+  "https://time.com/7280114/donald-trump-2025-interview-transcript/",
+  "https://abcnews.go.com/US/full-transcript-trumps-exclusive-100-days-broadcast-interview/story?id=121291672",
+  "https://en.wikisource.org/wiki/Transcript_of_the_2025_Trump–Zelenskyy_meeting",
+  "https://abcnews.go.com/Politics/week-transcript-6-8-25-white-house-nec/story?id=123708097",
+  "https://transcripts.cnn.com/show/ip/date/2025-01-07/segment/02")
+
+#the Presidency Project contains a vast amount of data even for this 2nd term period, focused here on a few key ones
+
+scrape_trump <- function(url) {
+  Sys.sleep(1.5)
+  
+  tryCatch({
+    page <- read_html(url)
+    title <- page %>% html_node("title") %>% 
+      html_text(trim=TRUE)
+    
+    text <- page %>% html_nodes("p") %>% 
+      html_text(trim=TRUE) %>% 
+      paste(collapse="\n\n")
+    
+    tibble(speaker="Donald Trump", date=NA_character_, title, text, url)}, 
+    error = function(e) {message("Failed:", url); tibble()})}
+
+trump_ukraine <- map_dfr(trump_urls, scrape_trump) %>%
+  filter(str_detect(str_to_lower(text), "ukrain"))
+write_csv(trump_ukraine, "data/us_ukraine_trump.csv")
+head(trump_ukraine) 
+```
+
+```{r, Rubio on Ukraine, eval=FALSE}
+rubio_urls <- c(
+"hhttps://web.archive.org/web/20250624041218/https://www.state.gov/secretary-marco-rubio-with-megyn-kelly-of-the-megyn-kelly-show/",
+"https://web.archive.org/web/20250407030340/https://www.state.gov/secretary-of-state-marco-rubio-with-george-stephanopoulos-of-abc-this-week/",
+"hhttps://web.archive.org/web/20250427175627/ttps://www.state.gov/releases/office-of-the-spokesperson/2025/04/interview-secretary-of-state-marco-rubio-with-kristen-welker-of-nbc-meet-the-press/",
+"https://web.archive.org/web/20250428084345/https://www.state.gov/secretary-of-state-marco-rubio-with-kaitlan-collins-of-cnn/",
+"https://web.archive.org/web/20250711095736/https://www.state.gov/releases/office-of-the-spokesperson/2025/07/secretary-of-state-marco-rubios-remarks-to-the-press-at-the-kuala-lumpur-convention-center")
+
+scrape_rubio <- function(url) {
+  Sys.sleep(1.5)
+  
+  tryCatch({
+    page <- read_html(url)
+    title <- page %>% html_node("title") %>% html_text(trim = TRUE)
+    text <- page %>% html_nodes("p") %>% html_text(trim = TRUE) %>% paste(collapse = "\n\n")
+    tibble(speaker = "Marco Rubio", date = NA_character_, title, text, url)}, 
+    error = function(e) {
+    message("ailed on: ", url)
+    tibble()})}
+
+rubio_data <- map_dfr(rubio_urls, scrape_rubio)
+
+rubio_ukraine <- rubio_data %>%
+  filter(str_detect(str_to_lower(text), "ukrain"))
+
+write_csv(rubio_ukraine, "data/us_ukraine_rubio.csv")
+print(rubio_ukraine)
+```
+
+
+```{r, US - Ukraine, message=FALSE}
+biden <- read_csv("data/us_ukraine_biden.csv") %>%
+  mutate(date = as.character(date))
+
+blinken <- read_csv("data/us_ukraine_blinken.csv") %>%
+  mutate(date = as.character(date))
+
+trump <- read_csv("data/us_ukraine_trump.csv") %>%
+  mutate(date = as.character(date))
+
+rubio <- read_csv("data/us_ukraine_rubio.csv") %>%
+  mutate(date = as.character(date))
+
+us_ukraine <- bind_rows(biden, blinken, trump, rubio)
+write_csv(us_ukraine, "data/us_ukraine.csv")
+```
+
+
+4. Russia - Ukraine
+
+```{r, Putin on Ukraine, eval=FALSE}
+putin_urls <- c(
+  "https://web.archive.org/web/20250418013820/http://kremlin.ru/catalog/countries/UA/events/67825",
+  "https://web.archive.org/web/20250514121905/http://kremlin.ru/catalog/countries/UA/events/67828",
+  "https://web.archive.org/web/20241207140314/http://kremlin.ru/catalog/countries/UA/events/67843",
+  "https://web.archive.org/web/20250520012029/http://kremlin.ru/catalog/countries/UA/events/68254",
+  "https://web.archive.org/web/20250622000626/http://kremlin.ru/catalog/countries/UA/events/69390",
+  "https://web.archive.org/web/20250425060814/http://kremlin.ru/catalog/countries/UA/events/69568",
+  "https://web.archive.org/web/20250626150210/http://kremlin.ru/catalog/countries/UA/events/71256",
+  "https://web.archive.org/web/20250612224954/http://kremlin.ru/catalog/countries/UA/events/71329",
+  "https://web.archive.org/web/20250420045457/http://kremlin.ru/catalog/countries/UA/events/74856",
+  "https://web.archive.org/web/20250428012051/http://kremlin.ru/catalog/countries/UA/events/76446",
+  "https://web.archive.org/web/20250522170426/http://kremlin.ru/catalog/countries/UA/events/76600")
+  
+scrape_putin <- function(url) {
+  Sys.sleep(1.5)
+  
+  tryCatch({
+    page <- read_html(url)
+    title <- page %>% html_node("title") %>% html_text(trim = TRUE)
+    text <- page %>% html_nodes("p") %>% html_text(trim = TRUE) %>% paste(collapse = "\n\n")
+    
+    tibble(
+      speaker = "Vladimir Putin",
+      date = NA_character_,
+      title = title,
+      text = text,
+      url = url)}, 
+    error = function(e) {
+    message("Failed to scrape: ", url)
+    return(tibble(
+      speaker = "Vladimir Putin",
+      date = NA_character_,
+      title = NA_character_,
+      text = NA_character_,
+      url = url))})}
+
+putin_all <- map_dfr(putin_urls, scrape_putin)
+
+write_csv(putin_all, "putin_raw.csv")
+
+putin_clean <- putin_all %>%
+  filter(!is.na(text) & str_trim(text) != "")
+
+keywords_pattern <- "украин|донбас|луганск|днр|лнр|киев|запорож|херсон"
+
+putin_ukraine <- putin_clean %>%
+  filter(str_detect(str_to_lower(text), keywords_pattern))
+
+write_csv(putin_ukraine, "data/russia_ukraine_putin.csv")
+print(putin_ukraine)  
+```
+
+
+```{r, Lavrov on Ukraine, eval=FALSE}
+lavrov_urls <- c(
+  "https://web.archive.org/web/20250313164326/https://mid.ru/ru/foreign_policy/news/2002637",
+  "https://web.archive.org/web/20231126213347/https://www.mid.ru/ru/foreign_policy/news/1867466/",
+  "https://web.archive.org/web/20230616180311/https://www.mid.ru/ru/foreign_policy/news/1888498/",
+  "https://web.archive.org/web/20220709113647/https://www.mid.ru/ru/foreign_policy/news/1821243/",
+  "https://web.archive.org/web/20221127042304/https://www.mid.ru/ru/foreign_policy/news/1840230/")
+
+scrape_lavrov <- function(url) {
+  Sys.sleep(1.5)  
+
+  tryCatch({
+    page <- read_html(url)
+    
+    title <- page %>%
+      html_node("title") %>%
+      html_text(trim = TRUE)
+    
+    text <- page %>%
+      html_nodes("p") %>%
+      html_text(trim = TRUE) %>%
+      paste(collapse = "\n\n")
+
+    tibble(
+      speaker = "Sergey Lavrov",
+      date = NA_character_,  # Date parsing could be added later
+      title = title,
+      text = text,
+      url = url)}, 
+    error = function(e) {
+    message("Failed to scrape: ", url)
+    tibble(
+      speaker = "Sergey Lavrov",
+      date = NA_character_,
+      title = NA_character_,
+      text = NA_character_,
+      url = url)})}
+
+lavrov_all <- map_dfr(lavrov_urls, scrape_lavrov)
+
+write_csv(lavrov_all, "lavrov_all_raw.csv")
+
+lavrov_clean <- lavrov_all %>%
+  filter(!is.na(text) & str_trim(text) != "")
+
+keywords <- "украин|донбас|луганск|днр|лнр|киев|запорож|херсон"
+
+lavrov_ukraine <- lavrov_clean %>%
+  filter(str_detect(str_to_lower(text), keywords))
+
+write_csv(lavrov_ukraine, "data/lavrov_ukraine.csv")
+print(lavrov_ukraine)
+```
+```{r combining scraped and manual Lavrov docs, eval=FALSE}
+scraped <- read_csv("data/lavrov_ukraine.csv", col_types = cols(date = col_character()))
+manual <- read_csv("data/lavrov_ukraine_manual.csv", col_types = cols(date = col_character()))
+
+#since I was only able to scrape a limited amount of data, additional information was collected manually
+
+all_cols <- union(colnames(scraped), colnames(manual))
+
+scraped_full <- scraped %>%
+  bind_rows(tibble::as_tibble(matrix(NA, nrow = 0, ncol = length(setdiff(all_cols, colnames(scraped))))) %>%
+              setNames(setdiff(all_cols, colnames(scraped)))) %>%
+  select(all_of(all_cols))
+
+manual_full <- manual %>%
+  bind_rows(tibble::as_tibble(matrix(NA, nrow = 0, ncol = length(setdiff(all_cols, colnames(manual))))) %>%
+              setNames(setdiff(all_cols, colnames(manual)))) %>%
+  select(all_of(all_cols))
+
+lavrov_ukraine_combined <- bind_rows(scraped_full, manual_full)
+
+write_csv(lavrov_ukraine_combined, "data/lavrov_ukraine_combined.csv")
+head(lavrov_ukraine_combined)
+```
+
+```{r, Russia - Ukraine, message=FALSE}
+putin <- read_csv("data/russia_ukraine_putin.csv", col_types = cols(date = col_character())) %>%
+  mutate(date = as.character(date))
+
+lavrov <- read_csv("data/lavrov_ukraine_combined.csv", col_types = cols(date = col_character())) %>%
+  mutate(date = as.character(date))
+
+russia_ukraine <- bind_rows(putin, lavrov)
+
+russia_ukraine <- bind_rows(putin, lavrov)
+write_csv(russia_ukraine, "data/russia_ukraine.csv")
+```
+
+
+##Cleaning and tokenizing the data##
+
+```{r, combining}
+us_ukraine <- us_ukraine %>%
+  mutate(country = "US", conflict = "Ukraine")
+
+russia_ukraine <- russia_ukraine %>%
+  mutate(country = "Russia", conflict = "Ukraine")
+
+us_chechnya <- us_chechnya %>%
+  mutate(country = "US", conflict = "Chechnya")
+
+russia_chechnya <- russia_chechnya %>%
+  mutate(country = "Russia", conflict = "Chechnya")
+
+df <- bind_rows(us_ukraine, russia_ukraine, us_chechnya, russia_chechnya)
+
+df_counts <- df %>%
+  count(country, conflict)
+
+print(df_counts)
+```
+*The data collected is highly uneven. However, since the collection process is time-consuming, I will proceed with the current dataset and apply normalization where necessary.*
+
+```{r, removing stopwords and cleaning}
+custom_stopwords <- c(
+  stopwords::stopwords("en"),
+  stopwords::stopwords("ru"),
+  "said", "will", "also", "president", "statement", "government", "people", "chechnya", "ukraine", "russia", "can", "question", "one", "mr", "going", "well", "say", "see", "get", "make", "want", "first", "lockhart", "just", "like", "go", "today", "much", "right", "way", "united", "states", "us", "country", "countries", "years", "states", "world", "new", "time", "last", "many", "two", "think", "putin", "trump", "russian", "iraq", "secretary", "now", "know", "это", "minister", "donald", "come", "powell", "work", "terry", "something", "thank", "things", "moran", "take", "let", "look", "q", "back", "made", "need", "lot", "still", "even", "year","long", "good", "together", "done", "use", "must", "day", "россии", "sure", "saying", "really", "trying", "every", "place", "may", "working", "help", "put", "around", "got", "которые", "continue", "kind", "fact", "never", "since", "ago", "fleischer", "albright", "another", "tell", "talk", "give", "thing", "able", "coming", "clear", "course", "forward", "days", "trade", "questions", "number", "ask",  "украины", "moscow", "whether", "yes", "gouse", "past", "making", "seen", "used", "week", "including", "three", "took", "find", "different", "process", "obviously", "bring", "future", "всё", "hard", "might", "next", "possible", "meet", "prime", "talking", "anything", "happen", "strong", "money", "september", "general", "karl", "answer", "getting", "taken", "months", "taking", "big", "try", "opportunity", "department", "rubio", "always", "asked", "heard", "understand", "matter", "agree", "lavrov", "already", "happened", "talked")
+
+cleaned_tokens <- df %>%
+  unnest_tokens(word, text) %>%
+  filter(!word %in% custom_stopwords) %>%
+  filter(str_detect(word, "^[a-zа-яё']+$"))
+
+cleaned_tokens %>%
+  count(word, sort = TRUE) %>%
+  print(50)
+```
+
+
+##Analysis and visualization##
+
+```{r, sentiment analysis and visualization, message=FALSE, warning=FALSE}
+nrc <- get_sentiments("nrc")
+
+#remembered here that sentiment needs to be normalized, since the corpus sizes are imbalanced
+
+total_words_per_doc <- cleaned_tokens %>%
+  group_by(speaker, date, title, country, conflict) %>%
+  summarise(total_words = n(), .groups = "drop")
+
+sentiment_words_per_doc <- cleaned_tokens %>%
+  inner_join(nrc, by = "word") %>%
+  group_by(speaker, date, title, country, conflict, sentiment) %>%
+  summarise(sentiment_count = n(), .groups = "drop")
+
+normalized_sentiment <- sentiment_words_per_doc %>%
+  left_join(total_words_per_doc, by = c("speaker", "date", "title", "country", "conflict")) %>%
+  mutate(sentiment_per_1000 = (sentiment_count / total_words) * 1000)
+
+normalized_avg_sentiment <- normalized_sentiment %>%
+  group_by(country, conflict, sentiment) %>%
+  summarise(avg_sentiment_per_1000 = mean(sentiment_per_1000), .groups = "drop")
+
+nrc_plot <- ggplot(normalized_avg_sentiment, aes(x = sentiment, y = avg_sentiment_per_1000, fill = country)) +
+  geom_col(position = "dodge") +
+  facet_wrap(~ conflict) +
+  theme_minimal() +
+  labs(
+    title = "NRC Sentiment",
+    subtitle = "By Country and Conflict",
+    x = "Sentiment",
+    y = "Mean Words per 1,000"
+  ) +
+  scale_fill_brewer(palette = "Set1") +
+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+nrc_plot
+ggsave("img/nrc_sentiment_by_country_conflict.png", plot = nrc_plot, dpi = 300)
+```
+
+
+*In reference to Chechnya, the US discourse demonstrates significantly higher usage of positive sentiment and trust words. Russian discourse also includes a high number of trust words, but also shows negative sentiment. Negative emotions like anger, fear, and sadness are relatively balanced between the two countries, but slightly higher in Russian rhetoric.
+In reference to Ukraine, the US again demonstrates a high number of positive sentiment and trust words. Russian discourse also contains a high number of trust words, but again with negative sentiment. Other sentiments that dominate in both countries are anger, anticipation and fear. 
+Russia shows anger, disgust, negative sentiment, while also showing more positive sentiment and sadness on Chechnya than on Ukraine.
+The US demonstrates more positive sentiment, joy and surprise regarding  Chechnya than Ukraine, and slightly more fear and anger in relation to Ukraine than Chechnya.
+Overall, the analysis demonstrates that Russia uses far less emotive language in the official rhetoric than the US does.*
+
+```{r, additional cleaning and TF-IDF by Country + Conflict}
+#the output contained many meaningless words, so I realized that further cleaning is necessary
+
+unwanted_words <- c(
+  "Lockhart", "lockhart", "gumbel", "atlantik", "парашютно", "vance", "slovakia", "digital", "провел", "магомед", "гудермесе", "докладывать", "доложено", "жителя", "максимальное", "произошедших", "russert", "advertisement","полка", "january", "content", "berger", "сергей", "rice", "germany", "remarks", "заместителю", "провести", "церемонии", "владимиру", "поручил", "путину", "трех", "человека", "прав", "й", "шос", "ташухаджиевых", "цагараев", "woodruff", "yeltsin", "gonna", "чечни", "июня", "ll", "bryant", "archived", "местных", "оказать", "netherlands", "aspen", "bruecke", "cet", "marshall", "грозный", "statedept", "курской", "helsinki", "blinken", "путин", "прибыл", "cards", "sergey", "gov", "websites", "broker", "совещание", "thirty", "семьи", "carlson", "tucker", "schweid", "президента", "кавказе", "северном", "eventsandtravel", "получили", "media", "alright", "eet", "homepage", "youtube", "председатель", "федеральной", "epstein", "выразил", "благодарность", "душанбе", "кардинальные", "комплексное", "комплексные", "окончании", "остановку", "произошли", "северокавказских", "dr", "владимир", "результате", "t", "вручил", "сайди", "цагараева", "современных", "villepin", "coordinated", "loudly", "streamed", "israelis", "austin", "wired", "s", "zelenskyy", "georgian", "федерации", "aartsen", "van", "андрей", "белоусов", "разделе", "чечне", "city", "афганистана", "совета", "тысяч", "председателя", "republic", "spokesperson", "finnish", "hall",  "highlight", "registered", "президент", "ходе", "моздоке", "подчеркнул",  "принимал", "словам", "экономического", "области", "greece", "internet",  "gedda", "priebus", "семье", "shaw",
+"bulgaria", "thankful", "biden",  "caucasus", "obama", "designation", "joe", "дел", "используют",  "аэропорту", "бюджетной", "виктору", "властями", "журналистам",  "задолженности", "запланированное", "зарплате", "касьянову", "командным", "машиной", "михаилу", "намерен", "пилота", "полета", "прекративших", "премьерами", "работникам", "селекторное", "су", "управлял", "христенко", "благородную", "брошенный", "выводится", "выполнили", "командир",  "кострому", "лейтенант", "майоров", "месту", "understandings", "groups", "aligned", "maskhadov", "десантно", "постоянными", "вдв", "иванов", "володин", "вайно", "антон", "speech", "inctitute", "est", "notice", "j", "german", "function", "antony", "monitoring", "экологии", "десантного", "природоохранной", "дмитрий", "директор", "валентина", "бортников", "institute", "viewing", "thursday", "press", "office", "online", "fund", "archive", "полк", "медведев", "матвиенко", "лавров", "колокольцев","дополнительные", "updated", "berlin", "tags", "https", "host", "directories", "bureaus", "please", "information", "chilly", "offices", "links", "administrative", "site", "deliver", "edit", "нарышкин", "мишустин", "михаил", "министр", "вячеслав", "александр", "транспорта", "деятельности", "членами", "представитель", "внешней", "contact", "live", "official", "hosted", "пострадавшим", "вывод","содействие","правоохранительного","российской","думы","внутренних","службы","current", "channel","coverage","released","mission","partnership","secure","promises", "вывода", "государственной", "вопросам", "администрации", "бортникову", "белоусову", "андрею", "areas", "edt", "обсудим", "исполняется", "директору", "взаимных", "васильевичу", "co", "pre", "рэмовичу", "рэмовичминистр", "приступим", "исполняются","терактов","гражданскими","амнистии","истребителе","ранения","расследования","вопрос","правительства","иностранных","оборонны","sensitive","history","policy","relations","durable","american","leadership", "новости", "забудут", "взвода", "важный", "борисовичспециальный", "александру", "friday", "travel", "affairs", "видеосвязи", "викторовичпредседатель", "june", "continued", "комментарии", "эдуардовичруководитель",
+"supported", "анатольевичзаместитель", "александровичминистр", "васильевичдиректор", "апреля", "владимировичпредседатель", "викторовичминистр", "евгеньевичдиректор", "ивановнапредседатель", "митинг", "направляясь", "вызов", "герой", "десантный", "обсуждению", "договоренности", "прекращением", "justice", "divide", "nato", "osce", "issues", "state", "territory", "strategic", "failure", "подчеркнута", "владимира", "путина", "жак", "ширак", "нато", "важность", "договорённости", "оперативное", "ударов", "mcclellan", "elect", "georgia", "venediktov", "lithuania", "georgia's", "blitzer", "siewert", "council", "polio", "liz", "truss", "tapper", "evan", "hudson", "monastyrskyy", "состоялся", "разговор", "подразделением", "посвященный", "роман", "событию", "заместитель", "провёл", "специальный", "lehrer", "clinton", "leavy", "turkey", "communist", "belie", "muir", "meyers", "pelley", "finland", "torture", "f", "stephanopoulos", "торжественной", "щетнев", "беседы", "обязанности", "самолета", "нужны", "меры", "украиной", "совещании", "nigeria", "bulgarian", "stoyanov", "pritzker", "ransomware", "boak", "kishida", "judy", "pritzker", "italy", "gcc", "дислокации", "звания", "ответили", "проходил", "catalog", "ua", "разделах", "emphasized", "operational", "verified", "giorgia", "meloni", "sweden", "kingdom", "ales", "bialiatski", "ханкале", "государства", "исполняющий", "руководитель", "задать", "приняли", "monitors", "yesterday's", "holding", "holodomor", "referenda", "passover", "nord", "scholz", "loans", "находился", "сообщил", "связанные", "совет", "уважаемые", "коллеги", "добрый", "greek", "sunday's", "enduring", "accountable", "cri", "republicans", "tonight", "героев", "дивизии", "николай", "слово", "поводу", "участие", "россией", "talbott", "range", "friends", "kishida's", "cia", "погибших", "полгода", "день", "хотел", "очень", "прежде", "face", "zakaria", "congratulate", "kyiv's",
+"первым", "го", "выступления", "стенограммы", "версия", "года", "bombed", "close", "challenges", "detention", "change", "allies", "объединенной", "сюда", "дата", "доступны", "лицензии", "материал", "impartial", "stream", "материалы", "опубликован", "официальный", "публикации", "thanksgiving", "сайт", "сайта", "ссылка", "текстовая", "conversation", "attribution", "http", "commons", "администрация", "ira", "news", "d", "creative", "ms", "lateral", "bi", "applause", "ways", "взрывов", "open", "год", "задачу", "open", "efforts", "tv", "geneva", "acts", "cycle", "федеральных", "постоянной", "базе", "принял", "главы", "madame", "assets", "events", "prague", "czech", "стал", "пришли", "правительство", "honest", "dutch", "daley", "classrooms", "resolution", "madeleine", "hide", "child", "seemed", "марта", "этому", "военной", "которое", "россия", "сил")
+
+#this was quiet a task
+
+cleaned_tokens <- cleaned_tokens %>%
+  filter(!word %in% unwanted_words)
+
+word_counts <- cleaned_tokens %>%
+  count(country, conflict, title, word, sort = TRUE)
+
+tfidf_data <- word_counts %>%
+  bind_tf_idf(word, title, n)
+
+#forgot the translation part, added later
+
+translation <-c( "терактах" = "terror acts",
+  "погибли" = "died",
+  "завоеватели" = "conquerors",
+  "защитниками" = "defenders",
+  "мужество" = "courage",
+  "героизм" = "heroism",
+  "экстремистами" = "extremist",
+  "разведки" = "intelligence",
+  "группировки" = "groups",
+  "безопасности" = "security",
+  "энергосистемам" = "energy systems",
+  "обороны" = "defense",
+  "террористической" = "terrorist",
+  "угрозой" = "threat",
+  "борьбе" = "struggle",
+  "противника" = "enemy",
+  "вооружённых" = "armed",
+  "защищали" = "defended",
+  "интересы" = "interests",
+  "вооружений" = "arms")
+
+top_tfidf <- tfidf_data %>%
+  group_by(country, conflict) %>%
+  slice_max(tf_idf, n = 10, with_ties = FALSE) %>%
+  ungroup()
+
+top_tfidf <- top_tfidf %>%
+  mutate(translated_word = if_else(
+    word %in% names(translation),
+    translation[word],
+    word))
+
+tfidf_plot <- top_tfidf %>%
+  mutate(translated_word = reorder_within(translated_word, tf_idf, list(country, conflict))) %>%
+  ggplot(aes(x = tf_idf, y = translated_word, fill = country)) +
+  geom_col(show.legend = FALSE) +
+  scale_fill_brewer(palette = "Set1") +
+  facet_wrap(country ~ conflict, scales = "free_y") +
+  scale_y_reordered() +
+  theme_minimal() +
+  labs(
+    title = "Top Keywords by Country and Conflict",
+    x = "TF-IDF", y = "Keyword")
+
+tfidf_plot
+ggsave("img/tfidf_keywords_by_country_conflict.png", plot = tfidf_plot, dpi = 300, width = 10, height = 7)
+```
+
+*TF-IDF analysis shows keywords revealing the Russian and US discourse on Chechnya and Ukraine. 
+Russian use of terms like “terror acts”, “extremist”, “conquerors”, “heroism" and “defended” shows a portrayal of Chechnya as a defence against terrorism. The narrative tone is heroic.
+US discourse using terms like “”hizballah”, “qaeda”, “islamic” shows linking the conflict to the broader war on terror. The narrative tone is terrorism-linked.
+In relation to Ukraine, Russia uses terms like “security”, “threat”, “terrorist”, framing Ukraine as a national security issue. The narrative tone is strategic and defensive. 
+The US uses terms like “aggression”, “sovereignty”, “democracy”, portraying Ukraine as a victim of aggression. The narrative tone is democratic and ideological.*
+
+
+```{r, extracting keywords context}
+keyword_map <- tribble(
+  ~keyword,        ~country, ~conflict,
+  "терактах",      "Russia", "Chechnya",
+  "группировки",   "Russia", "Chechnya",
+  "безопасности",  "Russia", "Ukraine",
+  "угрозой",       "Russia", "Ukraine",
+  "freedom",       "US",     "Chechnya",
+  "national",      "US",     "Chechnya",
+  "islamic",       "US",     "Chechnya",
+  "aggression",       "US",     "Ukraine",
+  "sovereignty",   "US",     "Ukraine")
+
+keyword_pattern <- str_c("\\b(", str_c(unique(keyword_map$keyword), collapse = "|"), ")\\b")
+
+df_clean <- df %>%
+  filter(!is.na(text) & str_trim(text) != "")
+
+sentences_df <- df %>%
+  filter(!is.na(text) & str_trim(text) != "") %>%
+  mutate(sentence_list = map(text, ~tokenize_sentences(.x)[[1]])) %>%
+  unnest(sentence_list) %>%
+  rename(sentence = sentence_list) %>%
+  mutate(
+    sentence_lower = str_to_lower(sentence),
+    keyword = str_extract(sentence_lower, regex(keyword_pattern, ignore_case = TRUE))
+  ) %>%
+  filter(!is.na(keyword))
+
+sentences_filtered <- sentences_df %>%
+  semi_join(keyword_map, by = c("keyword", "country", "conflict"))
+
+write_csv(sentences_filtered, "data/keyword_sentences_context.csv")
+```
+
+
+*The most important analysis*
+
+
+##Reflection##
+
+
+##AI/resources statement
