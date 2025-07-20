@@ -1,10 +1,10 @@
 ---
-title: "Final Assignment: Comparison of US and Russian Discourse on Chechnya and Ukraine"
-subtitle: ""
+title: "Final Assignment: Comparison of US and Russian Discourse on Chechnya"
 author: "Mariam Mouldin (Khamidova)"
-date: "`r Sys.Date()`"
 output:
-  html_document: default
+  html_document:
+    toc: true
+    number_sections: true
   md_document:
     variant: markdown_github
 ---
@@ -951,5 +951,9 @@ Due to time constraints, only a limited amount of data was collected, so any con
 
 Data collection posed challenges, especially for Chechnya-related materials dating back over 20 years, which may introduce unintentional selection bias.
 
+This was by far the most challenging assignment I’ve done, and I’m not sure everything went right.
 
 ##AI/resources statement
+
+While doing this assignment I consulted the links provided on the CFSS website, the lecture slides available on Canvas, and the relevant sections of the [R for Data
+Science](https://r4ds.hadley.nz/data-visualize.html#sec-ggplot2-calls). Additionally,I referred many times to ChatGPT for clarification and debugging, especially while scraping. 
