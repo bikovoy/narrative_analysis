@@ -1,6 +1,7 @@
 ---
-title: "Final Assignment: Comparison of US and Russian Discourse on Chechnya"
-author: "Mariam Mouldin (Khamidova)"
+title: "Narrative Analysis: Comparison of US and Russian Discourse on Chechnya and Ukraine"
+subtitle: "State Rhetoric in the Second Chechen War (1999–2002, shortened for this assignment) and the Russian Invasion of Ukraine (2022–present)"
+author: "Mariam Mouldin"
 output: md_document
 ---
 
@@ -29,7 +30,55 @@ library(tokenizers)
 library(tidyverse)
 ```
 
-##Collecting the data##
+## Introduction
+
+Narrative control is a central tool of geopolitics. This project applies Strategic Narrative Theory, which explains how states construct and project coherent narratives to legitimize actions, shape public perception, and influence both domestic and international audiences (Miskimmon et al., 2013). The specific research question is: 
+How do Russian and U.S. officials frame the conflicts in Chechnya (1999–2002) and Ukraine (2022–2025), and how do these narratives evolve over time? 
+By comparing Chechnya and Ukraine I aim to explore the continuity and evolution in Russia’s strategic narrative and rhetorical techniques. The US response serves as a useful counterpoint not only contrasting with Russia’s, but also different between the two conflicts.
+While some may question whether Chechnya is a domestic or international conflict and whether it is appropriate to compare it with Ukraine, my focus was solely on how state discourse is constructed and deployed. In fact, I believe that comparing these two cases may reveal deeper insights, especially how one conflict may have led to the other, and what this suggests about international responses today.
+For this analysis, I compiled a dataset of official speeches and public statements by Russian and U.S. leaders, including presidents, foreign ministers, and secretaries of state. These texts were collected from government archives, scraped from official websites, and translated where necessary, forming the empirical basis for a comparative discourse analysis across time, actors, and conflicts.
+
+## Data and Methods
+
+### Corpus Overview
+
+This study draws on 357 official speeches, statements, and interviews from U.S. and Russian government actors related to the conflicts in Chechnya (1999–2002) and Ukraine (2022–2025).
+
+| Conflict | Country | Documents |
+|----------|---------|-----------|
+| Chechnya | U.S.    | 111       |
+| Chechnya | Russia  | 45        |
+| Ukraine  | U.S.    | 183       |
+| Ukraine  | Russia  | 18        |
+| **Total**|         | **357**   |
+
+To address imbalance in corpus size, all word-based analyses (e.g., TF-IDF, sentiment) were normalized per 1,000 words per speech.
+
+### Speakers and Sources
+
+**U.S. Narrative**  
+- *Chechnya (1999–2002)*: Presidents Clinton and Bush; Secretaries Albright and Powell  
+- *Ukraine (2022–2025)*: Presidents Biden and Trump; Secretary Blinken and Senator Rubio  
+- **Sources**: WhiteHouse.gov, State.gov, via Wayback Machine
+
+**Russian Narrative**  
+- *Chechnya*: President Putin; Foreign Minister Igor Ivanov  
+- *Ukraine*: President Putin; Foreign Minister Sergey Lavrov  
+- **Sources**: Kremlin.ru, Mid.ru, via Wayback Machine
+
+> **Note**: Boris Yeltsin is excluded due to lack of archived data before December 31, 1999.
+
+###C hallenges and Limitations
+
+**Manual Collection**: Some data was scraped; other parts (e.g., Ivanov) were compiled manually due to scraping restrictions.
+
+**Translation**: Russian-language texts were manually translated by the author to preserve framing and tone. This avoids distortion from automated tools, but may introduce subjectivity.
+
+**Selection Bias**: Particularly for older materials (Chechnya-era), archival gaps may limit completeness.
+
+**Time Constraints**: The dataset, while diverse, is not exhaustive.
+
+## Data Collection
 
 1. US - Chechnya
 
@@ -683,7 +732,7 @@ write_csv(russia_ukraine, "data/russia_ukraine.csv")
 ```
 
 
-##Cleaning and tokenizing the data##
+##Cleaning and Preparation##
 
 ```{r, combining}
 us_ukraine <- us_ukraine %>%
@@ -724,7 +773,7 @@ cleaned_tokens %>%
 ```
 
 
-##Analysis and visualization##
+##Analysis and Results##
 
 ```{r, sentiment analysis and visualization, message=FALSE, warning=FALSE}
 nrc <- get_sentiments("nrc")
@@ -910,45 +959,14 @@ Here, Putin uses multilateral language to argue that Western support for Ukraine
 The US response offers a perspective that is different from Russia’s, but also not the same between the two cases themselves, shifting on sovereignty, religious framing, and geopolitical motivations between the two conflicts.*
 
 
+##Conclusion##
+
+
 ##Reflection##
-
-Time Window: Chechnya: 1999–2002 (shortened for this assignment) and Ukraine: 2022–present.
-
-Sources:
-
-US Narrative:
-Speeches, statements, and interviews from Presidents Clinton (until January 2001) and Bush(from January 2001) on Chechnya, and Presidents Biden (until January 2025) and Trump(from January 2005) on Ukraine. Additional briefings and interviews include Secretary of State Albright(until January 2001) and Powell (extended to 2003 for Powell due to limited documents) on Chechnya, and Blinken and Rubio on Ukraine. Data was collected from official websites (WhiteHouse.gov and State.gov) using the Wayback Machine.
-
-Russian Narrative:
-Statements and interviews of President Putin on Chechnya and Ukraine, as well as statements and interviews of Foreign Ministers Igor Ivanov (Chechnya) and Sergey Lavrov (Ukraine). Data was sourced from Kremlin.ru and Mid.ru via the Wayback Machine.
-Notes:
-Boris Yeltsin is excluded because Kremlin.ru archives start only from December 31, 1999, with the first document mentioning his stepping down and handing over the presidency to Putin.
-Igor Ivanov’s data was manually compiled because Mid.ru blocks automated scraping and the Wayback Machine does not have these URLs.
-Sergey Lavrov’s data was also scraped and collected manually due to restrictions on Mid.ru.
-Some collected data is in English; some is in Russian.
-
-Translation bias: Russian data was manually translated by the author to preserve rhetorical framing and tone, which could have been lost in automated translation tools.
-
-Corpus Imbalance.
-The dataset consists of:
-Chechnya:
-U.S. discourse: 111 documents
-Russian discourse: 45 documents
-Total: 156
-Ukraine:
-U.S. discourse: 183 documents
-Russian discourse: 18 documents
-Total: 201
-Total corpus size: 357 documents
-To address imbalances in corpus size, frequencies were normalized per 1,000 words per speech.
-
-Due to time constraints, only a limited amount of data was collected, so any conclusions should be taken with caution.
-
-Data collection posed challenges, especially for Chechnya-related materials dating back over 20 years, which may introduce unintentional selection bias.
 
 This was by far the most challenging assignment I’ve done, and I’m not sure everything went right.
 
-##AI/resources statement
+##AI/Resources statement
 
 While doing this assignment I consulted the links provided on the CFSS website, the lecture slides available on Canvas, and the relevant sections of the [R for Data
 Science](https://r4ds.hadley.nz/data-visualize.html#sec-ggplot2-calls). Additionally,I referred many times to ChatGPT for clarification and debugging, especially while scraping. 
