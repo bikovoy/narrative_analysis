@@ -103,17 +103,7 @@ archival gaps may limit completeness.
 
 **Time Constraints**: The dataset, while diverse, is not exhaustive.
 
-## Data Collection
-
-1.  US - Chechnya
-
-2.  Russia - Chechnya
-
-3.  US - Ukraine
-
-4.  Russia - Ukraine
-
-## Cleaning and Preparation
+## Analysis and Results
 
     ## # A tibble: 4 × 3
     ##   country conflict     n
@@ -122,11 +112,6 @@ archival gaps may limit completeness.
     ## 2 Russia  Ukraine     18
     ## 3 US      Chechnya   111
     ## 4 US      Ukraine    183
-
-*The data collected is highly uneven. However, since the collection
-process is time-consuming, I will proceed with the current dataset and
-apply normalization where necessary.*
-
     ## # A tibble: 37,374 × 2
     ##    word              n
     ##    <chr>         <int>
@@ -141,8 +126,6 @@ apply normalization where necessary.*
     ##  9 energy          849
     ## 10 efforts         829
     ## # ℹ 37,364 more rows
-
-## Analysis and Results
 
 ![](README_files/figure-markdown_strict/sentiment%20analysis%20and%20visualization-1.png)
 
@@ -162,6 +145,28 @@ surprise regarding Chechnya than Ukraine, and slightly more fear and
 anger in relation to Ukraine than Chechnya. Overall, the analysis
 demonstrates that Russia uses far less emotive language in the official
 rhetoric than the US does.*
+
+    ## # A tibble: 4 × 3
+    ##   country conflict     n
+    ##   <chr>   <chr>    <int>
+    ## 1 Russia  Chechnya    45
+    ## 2 Russia  Ukraine     18
+    ## 3 US      Chechnya   111
+    ## 4 US      Ukraine    183
+    ## # A tibble: 37,374 × 2
+    ##    word              n
+    ##    <chr>         <int>
+    ##  1 security       1877
+    ##  2 support        1603
+    ##  3 international  1507
+    ##  4 global         1091
+    ##  5 war             997
+    ##  6 cooperation     978
+    ##  7 economic        942
+    ##  8 peace           919
+    ##  9 energy          849
+    ## 10 efforts         829
+    ## # ℹ 37,364 more rows
 
 ![](README_files/figure-markdown_strict/additional%20cleaning%20and%20TF-IDF%20by%20Country%20+%20Conflict-1.png)
 
