@@ -6,7 +6,7 @@ output: md_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 ```
 
 
@@ -68,7 +68,7 @@ To address imbalance in corpus size, all word-based analyses (e.g., TF-IDF, sent
 
 > **Note**: Boris Yeltsin is excluded due to lack of archived data before December 31, 1999.
 
-###C hallenges and Limitations
+### Challenges and Limitations
 
 **Manual Collection**: Some data was scraped; other parts (e.g., Ivanov) were compiled manually due to scraping restrictions.
 
@@ -732,7 +732,7 @@ write_csv(russia_ukraine, "data/russia_ukraine.csv")
 ```
 
 
-##Cleaning and Preparation##
+## Cleaning and Preparation
 
 ```{r, combining}
 us_ukraine <- us_ukraine %>%
@@ -754,6 +754,7 @@ df_counts <- df %>%
 
 print(df_counts)
 ```
+
 *The data collected is highly uneven. However, since the collection process is time-consuming, I will proceed with the current dataset and apply normalization where necessary.*
 
 ```{r, removing stopwords and cleaning}
@@ -773,7 +774,7 @@ cleaned_tokens %>%
 ```
 
 
-##Analysis and Results##
+## Analysis and Results
 
 ```{r, sentiment analysis and visualization, message=FALSE, warning=FALSE}
 nrc <- get_sentiments("nrc")
@@ -811,7 +812,7 @@ nrc_plot <- ggplot(normalized_avg_sentiment, aes(x = sentiment, y = avg_sentimen
 theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 nrc_plot
-ggsave("img/nrc_sentiment_by_country_conflict.png", plot = nrc_plot, dpi = 300)
+ggsave("img/nrc_sentiment_by_country_conflict.png", plot = nrc_plot, dpi = 300, width = 12, height = 8, units = "in")
 ```
 
 
@@ -959,14 +960,14 @@ Here, Putin uses multilateral language to argue that Western support for Ukraine
 The US response offers a perspective that is different from Russia’s, but also not the same between the two cases themselves, shifting on sovereignty, religious framing, and geopolitical motivations between the two conflicts.*
 
 
-##Conclusion##
+## Conclusion
 
 
-##Reflection##
+## Reflection
 
 This was by far the most challenging assignment I’ve done, and I’m not sure everything went right.
 
-##AI/Resources statement
+## AI/Resources statement
 
 While doing this assignment I consulted the links provided on the CFSS website, the lecture slides available on Canvas, and the relevant sections of the [R for Data
-Science](https://r4ds.hadley.nz/data-visualize.html#sec-ggplot2-calls). Additionally,I referred many times to ChatGPT for clarification and debugging, especially while scraping. 
+Science](https://r4ds.hadley.nz/data-visualize.html#sec-ggplot2-calls). Additionally, I referred many times to ChatGPT for clarification and debugging, especially while scraping. 
