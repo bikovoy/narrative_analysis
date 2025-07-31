@@ -127,7 +127,7 @@ archival gaps may limit completeness.
     ## 10 efforts         829
     ## # ℹ 37,364 more rows
 
-![](README_files/figure-markdown_strict/sentiment%20analysis%20and%20visualization-1.png)
+![](README_files/img/nrc_sentiment_by_country_conflict.png)
 
 *In reference to Chechnya, the US discourse demonstrates significantly
 higher usage of positive sentiment and trust words. Russian discourse
@@ -168,7 +168,7 @@ rhetoric than the US does.*
     ## 10 efforts         829
     ## # ℹ 37,364 more rows
 
-![](README_files/figure-markdown_strict/additional%20cleaning%20and%20TF-IDF%20by%20Country%20+%20Conflict-1.png)
+![](README_files/img/tfidf_keywords_by_country_conflict.png)
 
 *TF-IDF analysis shows keywords revealing the Russian and US discourse
 on Chechnya and Ukraine. Russian use of terms like “terror acts”,
