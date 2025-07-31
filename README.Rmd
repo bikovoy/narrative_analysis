@@ -84,7 +84,7 @@ To address imbalance in corpus size, all word-based analyses (e.g., TF-IDF, sent
 
 ## Analysis and Results
 
-```{r, sentiment analysis and visualization, echo=FALSE, message=FALSE, warning=FALSE}
+```{r, sentiment analysis and visualization, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 source("R/cleaning.R")
 
 cleaned_tokens <- clean_and_tokenize(df)
@@ -136,7 +136,7 @@ The US demonstrates more positive sentiment, joy and surprise regarding  Chechny
 
 Overall, the analysis demonstrates that Russia uses far less emotive language in the official rhetoric than the US does.*
 
-```{r, additional cleaning and TF-IDF by Country + Conflict, echo=FALSE, message=FALSE, warning=FALSE}
+```{r, additional cleaning and TF-IDF by Country + Conflict, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 
 source("R/cleaning.R")
 

@@ -108,28 +108,6 @@ archival gaps may limit completeness.
 
 ## Analysis and Results
 
-    ## # A tibble: 4 × 3
-    ##   country conflict     n
-    ##   <chr>   <chr>    <int>
-    ## 1 Russia  Chechnya    45
-    ## 2 Russia  Ukraine     18
-    ## 3 US      Chechnya   111
-    ## 4 US      Ukraine    183
-    ## # A tibble: 37,374 × 2
-    ##    word              n
-    ##    <chr>         <int>
-    ##  1 security       1877
-    ##  2 support        1603
-    ##  3 international  1507
-    ##  4 global         1091
-    ##  5 war             997
-    ##  6 cooperation     978
-    ##  7 economic        942
-    ##  8 peace           919
-    ##  9 energy          849
-    ## 10 efforts         829
-    ## # ℹ 37,364 more rows
-
 ![](img/nrc_sentiment_by_country_conflict.png)
 
 \*In reference to Chechnya, the US discourse demonstrates significantly
@@ -153,28 +131,6 @@ Ukraine than Chechnya.
 
 Overall, the analysis demonstrates that Russia uses far less emotive
 language in the official rhetoric than the US does.\*
-
-    ## # A tibble: 4 × 3
-    ##   country conflict     n
-    ##   <chr>   <chr>    <int>
-    ## 1 Russia  Chechnya    45
-    ## 2 Russia  Ukraine     18
-    ## 3 US      Chechnya   111
-    ## 4 US      Ukraine    183
-    ## # A tibble: 37,374 × 2
-    ##    word              n
-    ##    <chr>         <int>
-    ##  1 security       1877
-    ##  2 support        1603
-    ##  3 international  1507
-    ##  4 global         1091
-    ##  5 war             997
-    ##  6 cooperation     978
-    ##  7 economic        942
-    ##  8 peace           919
-    ##  9 energy          849
-    ## 10 efforts         829
-    ## # ℹ 37,364 more rows
 
 ![](img/tfidf_keywords_by_country_conflict.png)
 
