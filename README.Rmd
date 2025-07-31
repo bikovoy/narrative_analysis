@@ -127,14 +127,14 @@ ggsave("img/nrc_sentiment_by_country_conflict.png", plot = nrc_plot, dpi = 300, 
 ```
 ![](img/nrc_sentiment_by_country_conflict.png)
 
-*In reference to Chechnya, the US discourse demonstrates significantly higher usage of positive sentiment and trust words. Russian discourse also includes a high number of trust words, but also shows negative sentiment. Negative emotions like anger, fear, and sadness are relatively balanced between the two countries, but slightly higher in Russian rhetoric.
+*In reference to Chechnya, the US discourse demonstrates significantly higher usage of positive sentiment and trust words. Russian discourse also includes a high number of trust words, but also shows negative sentiment. Negative emotions like anger, fear, and sadness are relatively balanced between the two countries, but slightly higher in Russian rhetoric.*
 
-In reference to Ukraine, the US again demonstrates a high number of positive sentiment and trust words. Russian discourse also contains a high number of trust words, but again with negative sentiment. Other sentiments that dominate in both countries are anger, anticipation and fear. 
+*In reference to Ukraine, the US again demonstrates a high number of positive sentiment and trust words. Russian discourse also contains a high number of trust words, but again with negative sentiment. Other sentiments that dominate in both countries are anger, anticipation and fear.* 
 
-Russia shows anger, disgust, negative sentiment, while also showing more positive sentiment and sadness on Chechnya than on Ukraine.
-The US demonstrates more positive sentiment, joy and surprise regarding  Chechnya than Ukraine, and slightly more fear and anger in relation to Ukraine than Chechnya.
+*Russia shows anger, disgust, negative sentiment, while also showing more positive sentiment and sadness on Chechnya than on Ukraine.*
+*The US demonstrates more positive sentiment, joy and surprise regarding  Chechnya than Ukraine, and slightly more fear and anger in relation to Ukraine than Chechnya.*
 
-Overall, the analysis demonstrates that Russia uses far less emotive language in the official rhetoric than the US does.*
+*Overall, the analysis demonstrates that Russia uses far less emotive language in the official rhetoric than the US does.*
 
 ```{r, additional cleaning and TF-IDF by Country + Conflict, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 
@@ -197,12 +197,12 @@ ggsave("img/tfidf_keywords_by_country_conflict.png", plot = tfidf_plot, dpi = 30
 
 ![](img/tfidf_keywords_by_country_conflict.png)
 
-*TF-IDF analysis shows keywords revealing the Russian and US discourse on Chechnya and Ukraine. 
-Russian use of terms like “terror acts”, “extremist”, “conquerors”, “heroism" and “defended” shows a portrayal of Chechnya as a defence against terrorism. The narrative tone is heroic.
-US discourse using terms like “”hizballah”, “qaeda”, “islamic” shows linking the conflict to the broader war on terror. The narrative tone is terrorism-linked.
+*TF-IDF analysis shows keywords revealing the Russian and US discourse on Chechnya and Ukraine.* 
+*Russian use of terms like “terror acts”, “extremist”, “conquerors”, “heroism" and “defended” shows a portrayal of Chechnya as a defence against terrorism. The narrative tone is heroic.*
+*US discourse using terms like “”hizballah”, “qaeda”, “islamic” shows linking the conflict to the broader war on terror. The narrative tone is terrorism-linked.*
 
-In relation to Ukraine, Russia uses terms like “security”, “threat”, “terrorist”, framing Ukraine as a national security issue. The narrative tone is strategic and defensive. 
-The US uses terms like “aggression”, “sovereignty”, “democracy”, portraying Ukraine as a victim of aggression. The narrative tone is democratic and ideological.*
+*In relation to Ukraine, Russia uses terms like “security”, “threat”, “terrorist”, framing Ukraine as a national security issue. The narrative tone is strategic and defensive.* 
+*The US uses terms like “aggression”, “sovereignty”, “democracy”, portraying Ukraine as a victim of aggression. The narrative tone is democratic and ideological.*
 
 
 ```{r, extracting keywords context}
@@ -241,35 +241,35 @@ write_csv(sentences_filtered, "data/keyword_sentences_context.csv")
 ```
 
 
-*Interestingly, the US discourse on Chechnya contained the keyword “freedom”, but as the context extraction revealed it is not about advocating for Chechen self-determination or independence, but focusing on individual rights within Russia, such as press freedom and treatment of prisoners.
-For instance, Bill Clinton's statement on November 12, 1999 speaks to progress in:
-“press freedom, democracy, minority rights, and the treatment of prisoners…”
-This reveals that “freedom” refers to liberal democratic norms inside Russia, not to political freedom or autonomy for Chechnya itself.
+*Interestingly, the US discourse on Chechnya contained the keyword “freedom”, but as the context extraction revealed it is not about advocating for Chechen self-determination or independence, but focusing on individual rights within Russia, such as press freedom and treatment of prisoners.*
+*For instance, Bill Clinton's statement on November 12, 1999 speaks to progress in:*
+*“press freedom, democracy, minority rights, and the treatment of prisoners…”*
+*This reveals that “freedom” refers to liberal democratic norms inside Russia, not to political freedom or autonomy for Chechnya itself.*
 
-Clinton’s more direct and powerful remark on November 18, 1999, reveales the limits of US critique:
-“If they had put you in jail instead of electing you President, I would hope that every leader…would have stood up for you and for freedom in Russia and not said, ‘Well, that is an internal Russian affair…’”
-drawing a line between internal affairs and international concern: the US will not interfere with Russia's territorial claims, but will speak out when state power becomes abusive, especially if it violates civil or democratic rights.
+*Clinton’s more direct and powerful remark on November 18, 1999, reveales the limits of US critique:*
+*“If they had put you in jail instead of electing you President, I would hope that every leader…would have stood up for you and for freedom in Russia and not said, ‘Well, that is an internal Russian affair…’”*
+*drawing a line between internal affairs and international concern: the US will not interfere with Russia's territorial claims, but will speak out when state power becomes abusive, especially if it violates civil or democratic rights.*
 
-A key transformation appears in the post-9/11 discourse. In a White House press briefing on September 26, 2001, reporters challenge the sudden shift in the US labeling of Chechen fighters as “terrorists.” The dialogue includes:
-“All of a sudden, you're calling them terrorists? … Is this what Putin has asked for, in exchange for his help?”
- A clear pivot to counterterrorism rhetoric that reflects the US’s new interest in maintaining good relationships with Russia. 
+*A key transformation appears in the post-9/11 discourse. In a White House press briefing on September 26, 2001, reporters challenge the sudden shift in the US labeling of Chechen fighters as “terrorists.” The dialogue includes:*
+*“All of a sudden, you're calling them terrorists? … Is this what Putin has asked for, in exchange for his help?”*
+*A clear pivot to counterterrorism rhetoric that reflects the US’s new interest in maintaining good relationships with Russia.* 
  
-The US framing of Ukraine suggests that Ukraine’s defense is not just national, it’s existential for the liberal international order.
-Blinken states:
-“Everything that we and our allies and partners do… has the same purpose: to help Ukraine defend its sovereignty… and to stand up for the international rules and principles…”
-This casts Russia’s invasion as a threat not just to Ukraine, but to global order. 
+*The US framing of Ukraine suggests that Ukraine’s defense is not just national, it’s existential for the liberal international order.*
+*Blinken states:*
+*“Everything that we and our allies and partners do… has the same purpose: to help Ukraine defend its sovereignty… and to stand up for the international rules and principles…”*
+*This casts Russia’s invasion as a threat not just to Ukraine, but to global order.* 
 
-In stark contrast, Russia’s framing centering on its “security” and perceived threats. In Vladimir Putin’s speech on February 21, 2022, he warns:
-“Если Россия столкнётся с такой угрозой, как принятие Украины в НАТО… угрозы для нашей страны многократно возрастут.”
-(If Russia faces such a threat as Ukraine joining NATO, the threats to our country will increase many times over.)
-Here, Putin flips the narrative: Ukraine's sovereignty is seen as an existential threat to Russian national security.
+*In stark contrast, Russia’s framing centering on its “security” and perceived threats. In Vladimir Putin’s speech on February 21, 2022, he warns:*
+*“Если Россия столкнётся с такой угрозой, как принятие Украины в НАТО… угрозы для нашей страны многократно возрастут.”*
+*(If Russia faces such a threat as Ukraine joining NATO, the threats to our country will increase many times over.)*
+*Here, Putin flips the narrative: Ukraine's sovereignty is seen as an existential threat to Russian national security.*
 
-He further grounds this in international language:
-“…принцип равной и неделимой безопасности… не укреплять свою безопасность за счёт безопасности других государств.”
-(The principle of equal and indivisible security… not strengthening one’s security at the expense of others.)
-Here, Putin uses multilateral language to argue that Western support for Ukraine violates Russia’s right to security, thus reframing the aggressor as the aggrieved.
+*He further grounds this in international language:*
+*“…принцип равной и неделимой безопасности… не укреплять свою безопасность за счёт безопасности других государств.”*
+*(The principle of equal and indivisible security… not strengthening one’s security at the expense of others.)*
+*Here, Putin uses multilateral language to argue that Western support for Ukraine violates Russia’s right to security, thus reframing the aggressor as the aggrieved.*
 
-The US response offers a perspective that is different from Russia’s, but also not the same between the two cases themselves, shifting on sovereignty, religious framing, and geopolitical motivations between the two conflicts.*
+*The US response offers a perspective that is different from Russia’s, but also not the same between the two cases themselves, shifting on sovereignty, religious framing, and geopolitical motivations between the two conflicts.*
 
 
 ## Conclusion
