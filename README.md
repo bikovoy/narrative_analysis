@@ -7,21 +7,24 @@ perception, and influence both domestic and international audiences
 (Miskimmon et al., 2013). The specific research question is: How do
 Russian and U.S. officials frame the conflicts in Chechnya (1999–2002)
 and Ukraine (2022–2025), and how do these narratives evolve over time?
+
 By comparing Chechnya and Ukraine I aim to explore the continuity and
 evolution in Russia’s strategic narrative and rhetorical techniques. The
 US response serves as a useful counterpoint not only contrasting with
-Russia’s, but also different between the two conflicts. While some may
-question whether Chechnya is a domestic or international conflict and
-whether it is appropriate to compare it with Ukraine, my focus was
-solely on how state discourse is constructed and deployed. In fact, I
-believe that comparing these two cases may reveal deeper insights,
-especially how one conflict may have led to the other, and what this
-suggests about international responses today. For this analysis, I
-compiled a dataset of official speeches and public statements by Russian
-and U.S. leaders, including presidents, foreign ministers, and
-secretaries of state. These texts were collected from government
-archives, scraped from official websites, and translated where
-necessary, forming the empirical basis for a comparative discourse
+Russia’s, but also different between the two conflicts.
+
+While some may question whether Chechnya is a domestic or international
+conflict and whether it is appropriate to compare it with Ukraine, my
+focus was solely on how state discourse is constructed and deployed. In
+fact, I believe that comparing these two cases may reveal deeper
+insights, especially how one conflict may have led to the other, and
+what this suggests about international responses today.
+
+For this analysis, I compiled a dataset of official speeches and public
+statements by Russian and U.S. leaders, including presidents, foreign
+ministers, and secretaries of state. These texts were collected from
+government archives, scraped from official websites, and translated
+where necessary, forming the empirical basis for a comparative discourse
 analysis across time, actors, and conflicts.
 
 ## Data and Methods
@@ -127,7 +130,7 @@ archival gaps may limit completeness.
     ## 10 efforts         829
     ## # ℹ 37,364 more rows
 
-![](README_files/img/nrc_sentiment_by_country_conflict.png)
+![](img/nrc_sentiment_by_country_conflict.png)
 
 *In reference to Chechnya, the US discourse demonstrates significantly
 higher usage of positive sentiment and trust words. Russian discourse
@@ -168,7 +171,7 @@ rhetoric than the US does.*
     ## 10 efforts         829
     ## # ℹ 37,364 more rows
 
-![](README_files/img/tfidf_keywords_by_country_conflict.png)
+![](img/tfidf_keywords_by_country_conflict.png)
 
 *TF-IDF analysis shows keywords revealing the Russian and US discourse
 on Chechnya and Ukraine. Russian use of terms like “terror acts”,

@@ -32,10 +32,14 @@ library(tidyverse)
 
 ## Introduction
 
-Narrative control is a central tool of geopolitics. This project applies Strategic Narrative Theory, which explains how states construct and project coherent narratives to legitimize actions, shape public perception, and influence both domestic and international audiences (Miskimmon et al., 2013). The specific research question is: 
+Narrative control is a central tool of geopolitics. This project applies Strategic Narrative Theory, which explains how states construct and project coherent narratives to legitimize actions, shape public perception, and influence both domestic and international audiences (Miskimmon et al., 2013). 
+The specific research question is: 
 How do Russian and U.S. officials frame the conflicts in Chechnya (1999–2002) and Ukraine (2022–2025), and how do these narratives evolve over time? 
+
 By comparing Chechnya and Ukraine I aim to explore the continuity and evolution in Russia’s strategic narrative and rhetorical techniques. The US response serves as a useful counterpoint not only contrasting with Russia’s, but also different between the two conflicts.
+
 While some may question whether Chechnya is a domestic or international conflict and whether it is appropriate to compare it with Ukraine, my focus was solely on how state discourse is constructed and deployed. In fact, I believe that comparing these two cases may reveal deeper insights, especially how one conflict may have led to the other, and what this suggests about international responses today.
+
 For this analysis, I compiled a dataset of official speeches and public statements by Russian and U.S. leaders, including presidents, foreign ministers, and secretaries of state. These texts were collected from government archives, scraped from official websites, and translated where necessary, forming the empirical basis for a comparative discourse analysis across time, actors, and conflicts.
 
 ## Data and Methods
@@ -119,10 +123,9 @@ nrc_plot <- ggplot(normalized_avg_sentiment, aes(x = sentiment, y = avg_sentimen
   scale_fill_brewer(palette = "Set1") +
 theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-nrc_plot
 ggsave("img/nrc_sentiment_by_country_conflict.png", plot = nrc_plot, dpi = 300, width = 12, height = 8, units = "in")
 ```
-
+![](img/nrc_sentiment_by_country_conflict.png)
 
 *In reference to Chechnya, the US discourse demonstrates significantly higher usage of positive sentiment and trust words. Russian discourse also includes a high number of trust words, but also shows negative sentiment. Negative emotions like anger, fear, and sadness are relatively balanced between the two countries, but slightly higher in Russian rhetoric.
 In reference to Ukraine, the US again demonstrates a high number of positive sentiment and trust words. Russian discourse also contains a high number of trust words, but again with negative sentiment. Other sentiments that dominate in both countries are anger, anticipation and fear. 
@@ -185,9 +188,10 @@ tfidf_plot <- top_tfidf %>%
     title = "Top Keywords by Country and Conflict",
     x = "TF-IDF", y = "Keyword")
 
-tfidf_plot
 ggsave("img/tfidf_keywords_by_country_conflict.png", plot = tfidf_plot, dpi = 300, width = 10, height = 7)
 ```
+
+![](img/tfidf_keywords_by_country_conflict.png)
 
 *TF-IDF analysis shows keywords revealing the Russian and US discourse on Chechnya and Ukraine. 
 Russian use of terms like “terror acts”, “extremist”, “conquerors”, “heroism" and “defended” shows a portrayal of Chechnya as a defence against terrorism. The narrative tone is heroic.
