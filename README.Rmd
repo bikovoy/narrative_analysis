@@ -74,6 +74,8 @@ To address imbalance in corpus size, all word-based analyses (e.g., TF-IDF, sent
 
 > **Note**: Boris Yeltsin is excluded due to lack of archived data before December 31, 1999.
 
+A full list of all 357 documents, including speaker, date, title, conflict, country, and source URL, is available in [corpus_index.csv](./corpus_index.csv).
+
 ### Challenges and Limitations
 
 **Manual Collection**: Some data was scraped; other parts (e.g., Ivanov) were compiled manually due to scraping restrictions.
@@ -147,7 +149,8 @@ ggsave("img/nrc_sentiment_by_country_conflict.png", plot = nrc_plot, dpi = 300, 
 source("R/cleaning.R")
 
 # removing unwanted/junk words using the function
-cleaned_tokens <- remove_unwanted_words(cleaned_tokens)
+
+cleaned_tokens <- remove_unwanted_words(cleaned_tokens, unwanted_words)
 
 # calculating tf-idf scores by country, conflict, and title
 tfidf_data <- calculate_tfidf(cleaned_tokens)
