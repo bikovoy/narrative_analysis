@@ -66,7 +66,9 @@ clean_and_tokenize <- function(df, extra_stopwords = character()) {
   df %>%
     unnest_tokens(word, text) %>%
     filter(!word %in% custom_stopwords) %>%
-    filter(str_detect(word, "^[a-zа-яё']+$"))}
+    filter(str_detect(word, "^[a-zа-яё']+$")) %>%
+    select(speaker, date, title, url, country, conflict, word)
+}
 
 # Defining unwanted words
 unwanted_words <- c(
