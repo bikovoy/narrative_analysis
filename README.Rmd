@@ -42,6 +42,8 @@ While some may question whether Chechnya is a domestic or international conflict
 
 For this analysis, I compiled a dataset of official speeches and public statements by Russian and U.S. leaders, including presidents, foreign ministers, and secretaries of state. These texts were collected from government archives, scraped from official websites, and translated where necessary, forming the empirical basis for a comparative discourse analysis across time, actors, and conflicts.
 
+The following section describes the dataset, speaker selection, and methodological approach.
+
 ## Data and Methods
 
 ### Corpus Overview
@@ -83,6 +85,8 @@ To address imbalance in corpus size, all word-based analyses (e.g., TF-IDF, sent
 **Time Constraints**: The dataset, while diverse, is not exhaustive.
 
 ## Analysis and Results
+
+### Sentiment Trends by Country and Conflict
 
 ```{r, sentiment analysis and visualization, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 source("R/cleaning.R")
@@ -135,6 +139,8 @@ ggsave("img/nrc_sentiment_by_country_conflict.png", plot = nrc_plot, dpi = 300, 
 *The US demonstrates more positive sentiment, joy and surprise regarding  Chechnya than Ukraine, and slightly more fear and anger in relation to Ukraine than Chechnya.*
 
 *Overall, the analysis demonstrates that Russia uses far less emotive language in the official rhetoric than the US does.*
+
+### TF-IDF: Key Terms and Framing Differences
 
 ```{r, additional cleaning and TF-IDF by Country + Conflict, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 

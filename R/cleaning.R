@@ -1,40 +1,37 @@
+# Loading Required Libraries
+
 library(tidytext)
 library(dplyr)
 library(stringr)
 library(stopwords)
 
-# Combine All Data with Metadata
+# Function: Loading and labeling data
+
+load_and_label <- function(file_path, country, conflict) {
+  readr::read_csv(file_path) %>%
+    mutate(country = country, conflict = conflict)
+}
+
+# Loading all speech data with metadata
 
 us_ukraine <- readr::read_csv("data/us_ukraine.csv")
 russia_ukraine <- readr::read_csv("data/russia_ukraine.csv")
 us_chechnya <- readr::read_csv("data/us_chechnya.csv")
 russia_chechnya <- readr::read_csv("data/russia_chechnya.csv")
 
-us_ukraine <- us_ukraine %>%
-  mutate(country = "US", conflict = "Ukraine")
-
-russia_ukraine <- russia_ukraine %>%
-  mutate(country = "Russia", conflict = "Ukraine")
-
-us_chechnya <- us_chechnya %>%
-  mutate(country = "US", conflict = "Chechnya")
-
-russia_chechnya <- russia_chechnya %>%
-  mutate(country = "Russia", conflict = "Chechnya")
-
-# Merge all into a single dataframe
+# Combining all datasets
 
 df <- bind_rows(us_ukraine, russia_ukraine, us_chechnya, russia_chechnya)
 
-# Show document count per country and conflict
+# Creating and exporting corpus index for reference
 
-df_counts <- df %>%
-  count(country, conflict)
+corpus_index <- df %>% select(speaker, date, title, url, country, conflict)
+write.csv(corpus_index, "corpus_index.csv", row.names = FALSE)
 
-print(df_counts)
+# Checking document counts by group
 
-# Note: Data is imbalanced — normalization applied later
-
+df_counts <- df %>% count(country, conflict)
+print(df_counts) # Note: Data is imbalanced, normalization handled later
 
 # Defining custom stopwords
 
@@ -43,23 +40,26 @@ custom_stopwords <- c(
   stopwords::stopwords("ru"),
   "said", "will", "also", "president", "statement", "government", "people", "chechnya", "ukraine", "russia", "can", "question", "one", "mr", "going", "well", "say", "see", "get", "make", "want", "first", "lockhart", "just", "like", "go", "today", "much", "right", "way", "united", "states", "us", "country", "countries", "years", "states", "world", "new", "time", "last", "many", "two", "think", "putin", "trump", "russian", "iraq", "secretary", "now", "know", "это", "minister", "donald", "come", "powell", "work", "terry", "something", "thank", "things", "moran", "take", "let", "look", "q", "back", "made", "need", "lot", "still", "even", "year","long", "good", "together", "done", "use", "must", "day", "россии", "sure", "saying", "really", "trying", "every", "place", "may", "working", "help", "put", "around", "got", "которые", "continue", "kind", "fact", "never", "since", "ago", "fleischer", "albright", "another", "tell", "talk", "give", "thing", "able", "coming", "clear", "course", "forward", "days", "trade", "questions", "number", "ask",  "украины", "moscow", "whether", "yes", "gouse", "past", "making", "seen", "used", "week", "including", "three", "took", "find", "different", "process", "obviously", "bring", "future", "всё", "hard", "might", "next", "possible", "meet", "prime", "talking", "anything", "happen", "strong", "money", "september", "general", "karl", "answer", "getting", "taken", "months", "taking", "big", "try", "opportunity", "department", "rubio", "always", "asked", "heard", "understand", "matter", "agree", "lavrov", "already", "happened", "talked")
 
-# Tokenizing and Cleaning
+# Tokenizing and Initital Cleaning
 
-cleaned_tokens <- df %>%
-  unnest_tokens(word, text) %>%
-  filter(!word %in% custom_stopwords) %>%
-  filter(str_detect(word, "^[a-zа-яё']+$"))
+clean_and_tokenize <- function(df, extra_stopwords = character()) {
+  all_stopwords <- unique(c(stopwords("en"), stopwords("ru"), extra_stopwords))
+  df %>%
+    unnest_tokens(word, text) %>%
+    filter(!word %in% all_stopwords) %>%
+    filter(str_detect(word, "^[a-zа-яё']+$"))  # Keep words in English or Russian
+}
 
-# Preview Most Common Words
+# Appling cleaning
 
-cleaned_tokens %>%
-  count(word, sort = TRUE) %>%
-  print(50)
+cleaned_tokens <- clean_and_tokenize(df, custom_stopwords)
 
-#' Cleaning and tokenizing speech data
-#' @param df A data frame with a column called "text"
-#' @param extra_stopwords Additional stopwords to remove
-#' @return Cleaned token dataframe
+# Preview top 50 frequent words
+
+cleaned_tokens %>% count(word, sort = TRUE) %>% print(n = 50)
+
+# Removing unwanted (non-informative or noisy) tokens
+
 clean_and_tokenize <- function(df, extra_stopwords = character()) {
   custom_stopwords <- unique(c(stopwords("en"), stopwords("ru"), extra_stopwords))
   
@@ -75,17 +75,14 @@ unwanted_words <- c(
   "supported", "анатольевичзаместитель", "александровичминистр", "васильевичдиректор", "апреля", "владимировичпредседатель", "викторовичминистр", "евгеньевичдиректор", "ивановнапредседатель", "митинг", "направляясь", "вызов", "герой", "десантный", "обсуждению", "договоренности", "прекращением", "justice", "divide", "nato", "osce", "issues", "state", "territory", "strategic", "failure", "подчеркнута", "владимира", "путина", "жак", "ширак", "нато", "важность", "договорённости", "оперативное", "ударов", "mcclellan", "elect", "georgia", "venediktov", "lithuania", "georgia's", "blitzer", "siewert", "council", "polio", "liz", "truss", "tapper", "evan", "hudson", "monastyrskyy", "состоялся", "разговор", "подразделением", "посвященный", "роман", "событию", "заместитель", "провёл", "специальный", "lehrer", "clinton", "leavy", "turkey", "communist", "belie", "muir", "meyers", "pelley", "finland", "torture", "f", "stephanopoulos", "торжественной", "щетнев", "беседы", "обязанности", "самолета", "нужны", "меры", "украиной", "совещании", "nigeria", "bulgarian", "stoyanov", "pritzker", "ransomware", "boak", "kishida", "judy", "pritzker", "italy", "gcc", "дислокации", "звания", "ответили", "проходил", "catalog", "ua", "разделах", "emphasized", "operational", "verified", "giorgia", "meloni", "sweden", "kingdom", "ales", "bialiatski", "ханкале", "государства", "исполняющий", "руководитель", "задать", "приняли", "monitors", "yesterday's", "holding", "holodomor", "referenda", "passover", "nord", "scholz", "loans", "находился", "сообщил", "связанные", "совет", "уважаемые", "коллеги", "добрый", "greek", "sunday's", "enduring", "accountable", "cri", "republicans", "tonight", "героев", "дивизии", "николай", "слово", "поводу", "участие", "россией", "talbott", "range", "friends", "kishida's", "cia", "погибших", "полгода", "день", "хотел", "очень", "прежде", "face", "zakaria", "congratulate", "kyiv's",
   "первым", "го", "выступления", "стенограммы", "версия", "года", "bombed", "close", "challenges", "detention", "change", "allies", "объединенной", "сюда", "дата", "доступны", "лицензии", "материал", "impartial", "stream", "материалы", "опубликован", "официальный", "публикации", "thanksgiving", "сайт", "сайта", "ссылка", "текстовая", "conversation", "attribution", "http", "commons", "администрация", "ira", "news", "d", "creative", "ms", "lateral", "bi", "applause", "ways", "взрывов", "open", "год", "задачу", "open", "efforts", "tv", "geneva", "acts", "cycle", "федеральных", "постоянной", "базе", "принял", "главы", "madame", "assets", "events", "prague", "czech", "стал", "пришли", "правительство", "honest", "dutch", "daley", "classrooms", "resolution", "madeleine", "hide", "child", "seemed", "марта", "этому", "военной", "которое", "россия", "сил")
 
-#' Further cleaning already-tokenized text
-#' @param tokens A data frame of tokens (one word per row)
-#' @return Filtered token dataframe
-remove_unwanted_words <- function(tokens) {
-  tokens %>%
-    filter(!word %in% unwanted_words)
-  }
+# Further cleaning already-tokenized text
+ 
+remove_unwanted_words <- function(tokens, unwanted_words) {
+  tokens %>% filter(!word %in% unwanted_words)
+}
 
-#' Calculate tf-idf from cleaned tokens
-#' @param tokens Cleaned token dataframe
-#' @return tf-idf dataframe
+# TF-IDF calculation on cleaned speech content
+
 calculate_tfidf <- function(tokens) {
   tokens %>%
     count(country, conflict, title, word, sort = TRUE) %>%

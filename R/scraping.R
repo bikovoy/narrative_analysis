@@ -7,56 +7,116 @@ library(rvest)
 library(purrr)
 library(stringr)
 library(tibble)
+library(readr)
 
 # Functions
 
-# Function to extract document links from a certain Presidency Project search result page
+# Function to extract document links from Presidency Project search page
+
 get_presidency_links <- function(url) {
-  page <- read_html(url)
-  links <- page %>%
+  read_html(url) %>%
     html_nodes("a") %>%
     html_attr("href") %>%
     str_subset("^/documents/") %>%
     str_subset("guidebook|category-attributes", negate = TRUE) %>%
-    unique()
-  paste0("https://www.presidency.ucsb.edu", links)
+    unique() %>%
+    paste0("https://www.presidency.ucsb.edu", .)
 }
 
-# Function to scrape a single Presidency document page
+# Function: Generic scraper for Presidency pages
 scrape_presidency_doc <- function(url, speaker_name) {
   Sys.sleep(1)
   page <- read_html(url)
-  title <- page %>% html_node("h1") %>% html_text(trim = TRUE)
-  date <- page %>% html_node(".date-display-single") %>% html_text(trim = TRUE)
-  text <- page %>% html_node(".field-docs-content") %>% html_text(trim = TRUE)
-  tibble(speaker = speaker_name, date, title, text, url)
+  tibble(
+    speaker = speaker_name,
+    date = page %>% html_node(".date-display-single") %>% html_text(trim = TRUE),
+    title = page %>% html_node("h1") %>% html_text(trim = TRUE),
+    text = page %>% html_node(".field-docs-content") %>% html_text(trim = TRUE),
+    url = url
+  )
 }
 
-# Function to scrape Wayback Machine page
+# Function: Generate paginated search result URLs
+
+generate_presidency_pages <- function(base_url, max_pages) {
+  paste0(base_url, "&page=", 0:(max_pages - 1))
+}
+
+# Function: Generic scraper for archived Wayback pages
+
 scrape_wayback_doc <- function(url, speaker_name) {
   Sys.sleep(1.5)
   page <- tryCatch(read_html(url), error = function(e) NULL)
-  if (is.null(page)) return(tibble())
+  if (is.null(page)) {
+    message("Failed to load: ", url)
+    return(tibble())
+  }
+  
   title <- page %>% html_node("title") %>% html_text(trim = TRUE)
   text <- page %>% html_nodes("p") %>% html_text(trim = TRUE) %>% paste(collapse = "\n\n")
-  date <- str_extract(url, "\\d{8}")
-  tibble(speaker = speaker_name, date, title, text, url)
+  
+  date <- page %>% html_node("time") %>% html_attr("datetime")
+  if (is.na(date) || is.null(date)) {
+    date <- NA_character_  
+  }
+  
+  tibble(
+    speaker = speaker_name,
+    date = date,
+    title = title,
+    text = text,
+    url = url
+  )
 }
 
-# Function to batch scrape a list of URLs using given scraper function
+# Function: Generic scraper 
+
+scrape_generic_doc <- function(url, speaker_name) {
+  Sys.sleep(1.5)
+  page <- tryCatch(read_html(url), error = function(e) {
+    message("Failed:", url)
+    return(NULL)
+  })
+  
+  if (is.null(page)) return(tibble())
+  
+  title <- page %>% html_node("title") %>% html_text(trim = TRUE)
+  text <- page %>% html_nodes("p") %>% html_text(trim = TRUE) %>% paste(collapse = "\n\n")
+  
+  tibble(
+    speaker = speaker_name,
+    date = NA_character_,  # date could be extracted with regex from URL if needed
+    title = title,
+    text = text,
+    url = url
+  )
+}
+
+# Function: Batch scrape helper
 batch_scrape <- function(urls, scrape_fn, speaker) {
-  map_dfr(urls, function(url) scrape_fn(url, speaker))
+  map_dfr(urls, ~scrape_fn(.x, speaker))
 }
 
-# Function to write and print CSV
-write_and_preview <- function(data, file) {
-  write_csv(data, file)
-  print(head(data))
+# Function: Save and preview data
+
+save_and_preview <- function(df, filename) {
+  write_csv(df, filename)
+  print(head(df))
 }
 
-# 1. US - Chechnya
+# Function: Combine multiple CSV files into a unified dataset
 
-# Clinton on Chechnya
+combine_and_save <- function(file_paths, output_file) {
+  datasets <- map(file_paths, ~read_csv(.x) %>% mutate(date = as.character(date)))
+  combined <- bind_rows(datasets)
+  write_csv(combined, output_file)
+  print(paste("Saved combined file to:", output_file))
+  return(combined)
+}
+
+# 1. US Politicians on Chechnya
+
+# Clinton
 
 clinton_urls <- c(
   "https://www.presidency.ucsb.edu/advanced-search?field-keywords=Chechnya&field-keywords2=&field-keywords3=&from%5Bdate%5D=01-01-1999&to%5Bdate%5D=12-31-2002&person2=200298&category2%5B0%5D=&items_per_page=25",
@@ -64,51 +124,30 @@ clinton_urls <- c(
                  "https://www.presidency.ucsb.edu/advanced-search?field-keywords=Chechnya&field-keywords2=&field-keywords3=&from%5Bdate%5D=01-01-1999&to%5Bdate%5D=12-31-2002&person2=200298&category2%5B0%5D=&items_per_page=25&page=2"
   )
 
-#the presidency project made it easy to collect the data
+#The presidency project made it easy to collect the data
 
 clinton_links <- map(clinton_urls, get_presidency_links) %>% unlist() %>% unique()
-clinton_data <- map_dfr(clinton_links, ~scrape_presidency_doc(.x, "Bill Clinton"))
-clinton_data <- clinton_data %>%
+clinton_data <- batch_scrape(clinton_links, scrape_presidency_doc, "Bill Clinton") %>%
   filter(str_detect(str_to_lower(text), "chechnya|chechen"))
-write_and_preview(clinton_data, "data/us_chechnya_clinton.csv")
+write_csv(clinton_data, "data/us_chechnya_clinton.csv")
 
-# Bush on Chechnya
+# Bush
 
-base_url <- "https://www.presidency.ucsb.edu/advanced-search?field-keywords=Chechnya&field-keywords2=&field-keywords3=&from%5Bdate%5D=01-01-1999&to%5Bdate%5D=12-31-2002&person2=200299&category2%5B%5D=&items_per_page=25"
+bush_base_url <- "https://www.presidency.ucsb.edu/advanced-search?field-keywords=Chechnya&from%5Bdate%5D=01-01-1999&to%5Bdate%5D=12-31-2002&person2=200299&items_per_page=25"
 
-search_page <- read_html(base_url)
+bush_urls <- generate_presidency_pages(bush_base_url, max_pages = 2)
 
-links <- search_page %>%
-  html_nodes("a") %>%
-  html_attr("href") %>%
-  str_subset("^/documents/") %>%
-  str_subset("guidebook|category-attributes", negate = TRUE) %>%
-  unique()
+# Extract all document links from the search pages
 
-full_links <- paste0("https://www.presidency.ucsb.edu", links)
-print(full_links)
+bush_links <- map(bush_urls, get_presidency_links) %>% unlist() %>% unique()
 
-scrape_bush_doc <- function(url) {
-  Sys.sleep(1)  
-  page <- read_html(url)
-  
-  title <- page %>% html_node("h1") %>% html_text(trim = TRUE)
-  date <- page %>% html_node(".date-display-single") %>% html_text(trim = TRUE)
-  text <- page %>% html_node(".field-docs-content") %>% html_text(trim = TRUE)
-  
-  tibble(
-    speaker = "George W. Bush",
-    date = date,
-    title = title,
-    text = text,
-    url = url)}
+bush_chechnya_data <- batch_scrape(bush_links, scrape_presidency_doc, speaker = "George W. Bush")
 
-bush_chechnya_docs <- map_dfr(full_links, scrape_bush_doc)
-print(bush_chechnya_docs)
-write_csv(bush_chechnya_docs, "data/us_chechnya_bush.csv")
+# Save to CSV and preview
 
+save_and_preview(bush_chechnya_filtered, "data/us_chechnya_bush.csv")
 
-# Albright on Chechnya
+# Albright
 
 archived_urls <- c(
   "https://web.archive.org/web/20010203173100/https://1997-2001.state.gov/statements/1999/991210b.html",
@@ -123,37 +162,13 @@ archived_urls <- c(
 
 #state.gov didn't allow to scrape, so I had to look for each link on the Wayback Machine
 
-scrape_wayback <- function(url) {
-  Sys.sleep(1)
-  
-  page <- read_html(url)
-  
-  if (is.null(page)) return(tibble())
-  
-  title <- page %>%
-    html_node("title") %>%
-    html_text(trim = TRUE)
-  
-  text <- page %>%
-    html_nodes("p") %>%
-    html_text(trim = TRUE) %>%
-    paste(collapse = "\n\n")
-  
-  date <- str_extract(url, "\\d{8}")
-  
-  tibble(
-    speaker = "Madeleine Albright",
-    date = date,
-    title = title,
-    text = text,
-    url = url)}
-albright_archive <- map_dfr(archived_urls, scrape_wayback)
-write_csv(albright_archive, "data/us_chechnya_albright_archive.csv")
-print(albright_archive)
+albright_archive <- batch_scrape(albright_urls, scrape_wayback_doc, speaker = "Madeleine Albright")
 
+# Save and preview
 
+save_and_preview(albright_archive, "data/us_chechnya_albright_archive.csv")
 
-#Powell on Chechnya
+#Powell
 
 powell_urls <- c(
   "https://web.archive.org/web/20030501010101/https://2001-2009.state.gov/secretary/former/powell/remarks/2003/20665.htm",
@@ -171,63 +186,26 @@ powell_urls <- c(
   "https://web.archive.org/web/20020822105245/https://2001-2009.state.gov/secretary/former/powell/remarks/2001/4962.htm",
   "https://web.archive.org/web/20030821055119/https://2001-2009.state.gov/secretary/former/powell/remarks/2003/23836.htm")
 
-scrape_wayback <- function(url) {
-  Sys.sleep(1)
-  
-  page <- tryCatch(
-    read_html(GET(url)),
-    error = function(e) return(NULL))
-  
-  if (is.null(page)) return(tibble())
-  
-  title <- page %>%
-    html_node("title") %>%
-    html_text(trim = TRUE)
-  
-  text <- page %>%
-    html_nodes("p") %>%
-    html_text(trim = TRUE) %>%
-    paste(collapse = "\n\n")
-  
-  date <- str_extract(url, "\\d{8}")
-  
-  tibble(
-    speaker = "Colin Powell",
-    date = date,
-    title = title,
-    text = text,
-    url = url)}
+powell_archive <- batch_scrape(powell_urls, scrape_wayback_doc, speaker = "Colin Powell")
 
-powell_archive <- map_dfr(powell_urls, scrape_wayback)
-write_csv(powell_archive, "data/us_chechnya_powell_archive.csv")
-print(powell_archive)
+# Save and preview
 
+save_and_preview(powell_archive, "data/us_chechnya_powell_archive.csv")
 
+# US - Chechnya dataset combining 
 
-# US - Chechnya combining 
+us_chechnya_files <- c(
+  "data/us_chechnya_clinton.csv",
+  "data/us_chechnya_bush.csv",
+  "data/us_chechnya_albright_archive.csv",
+  "data/us_chechnya_powell_archive.csv"
+)
 
-clinton <- read_csv("data/us_chechnya_clinton.csv") %>%
-  mutate(date = as.character(date))
+us_chechnya <- combine_and_save(us_chechnya_files, "data/us_chechnya.csv")
 
-bush <- read_csv("data/us_chechnya_bush.csv") %>%
-  mutate(date = as.character(date))
+# 2. Russian Politicians on Chechnya
 
-albright <- read_csv("data/us_chechnya_albright_archive.csv") %>%
-  mutate(date = as.character(date))
-
-powell <- read_csv("data/us_chechnya_powell_archive.csv") %>%
-  mutate(date = as.character(date))
-
-us_chechnya <- bind_rows(clinton, bush, albright, powell)
-
-write_csv(us_chechnya, "data/us_chechnya.csv")
-
-
-
-# 2. Russia - Chechnya
-
-
-# Putin on Chechnya
+# Putin
 
 putin_urls <- c(
   "https://web.archive.org/web/20000321000000/https://kremlin.ru/events/president/news/38776",
@@ -318,53 +296,31 @@ putin_urls <- c(
 
 #kremlin.ru not only prohibits web scraping, but also restricts document searches to a specific day, so each day had to be checked individually, and then only any related document was looked for on the Wayback Machine
 
-scrape_putin <- function(url) {
-  Sys.sleep(1.5)  
-  page <- tryCatch(read_html(url), error = function(e) NULL)
-  if (is.null(page)) return(tibble())
-  
-  title <- page %>% html_node("h1") %>% html_text(trim = TRUE)
-  text  <- page %>% html_nodes("p") %>% html_text(trim = TRUE) %>% paste(collapse = "\n\n")
-  date  <- page %>% html_node("time") %>% html_attr("datetime")
-  if (is.na(date)) {
-    date <- str_extract(url, "\\d{8}")}
-  
-  tibble(
-    speaker = "Putin",
-    date = date,
-    title = title,
-    text = text,
-    url = url)}
+putin_data <- batch_scrape(putin_urls, scrape_wayback_doc, speaker = "Putin")
 
-putin_data <- map_dfr(putin_urls, scrape_putin)
+# Filter for Chechnya-specific content (English or Russian)
 
 putin_chechnya <- putin_data %>%
   filter(str_detect(str_to_lower(text), "chechnya|chechen|чечн(я|ец|цы|ский|ские)?"))
 
-write_csv(putin_chechnya, "data/russia_chechnya_putin.csv")
-print(putin_chechnya)
+# Save
 
+save_and_preview(putin_chechnya, "data/russia_chechnya_putin.csv")
 
+# Russia - Chechnya dataset combining
 
-# Russia - Chechnya combining
-
-putin <- read_csv("data/russia_chechnya_putin.csv") %>%
-  mutate(date = as.character(date))
-
-ivanov <- read_csv("data/russia_chechnya_ivanov.csv") %>%
-  mutate(date = as.character(date))
+russia_chechnya_files <- c(
+  "data/russia_chechnya_putin.csv",
+  "data/russia_chechnya_ivanov.csv"
+)
 
 #Ivanov file had to be scraped manually, no findings on the Wayback Machine 
 
-russia_chechnya <- bind_rows(putin, ivanov)
-write_csv(russia_chechnya, "data/russia_chechnya.csv")
+russia_chechnya <- combine_and_save(russia_chechnya_files, "data/russia_chechnya.csv")
 
+# 3. US Politicians on Ukraine
 
-
-# 3. US - Ukraine
-
-
-#Biden on Ukraine
+#Biden
 
 search_urls <- c("https://www.presidency.ucsb.edu/advanced-search?field-keywords=Ukraine&field-keywords2=&field-keywords3=&from%5Bdate%5D=02-22-2022&to%5Bdate%5D=01-20-2025&person2=200320&category2%5B%5D=74&category2%5B%5D=68&items_per_page=25",
                  "https://www.presidency.ucsb.edu/advanced-search?field-keywords=Ukraine&field-keywords2=&field-keywords3=&from%5Bdate%5D=02-22-2022&to%5Bdate%5D=01-20-2025&person2=200320&category2%5B0%5D=74&category2%5B1%5D=68&items_per_page=25&page=1",
@@ -374,48 +330,26 @@ search_urls <- c("https://www.presidency.ucsb.edu/advanced-search?field-keywords
                  "https://www.presidency.ucsb.edu/advanced-search?field-keywords=Ukraine&field-keywords2=&field-keywords3=&from%5Bdate%5D=02-22-2022&to%5Bdate%5D=01-20-2025&person2=200320&category2%5B0%5D=74&category2%5B1%5D=68&items_per_page=25&page=5",
                  "https://www.presidency.ucsb.edu/advanced-search?field-keywords=Ukraine&field-keywords2=&field-keywords3=&from%5Bdate%5D=02-22-2022&to%5Bdate%5D=01-20-2025&person2=200320&category2%5B0%5D=74&category2%5B1%5D=68&items_per_page=25&page=6")
 
-get_links_from_page <- function(url) {
-  page <- read_html(url)
-  
-  links <- page %>%
-    html_nodes("a") %>%
-    html_attr("href") %>%
-    str_subset("^/documents/") %>%
-    str_subset("guidebook|category-attributes", negate = TRUE) %>%  
-    unique()
-  
-  full_links <- paste0("https://www.presidency.ucsb.edu", links)
-  return(full_links)}
+# Extracting document links from each search page
 
-all_links <- map(search_urls, get_links_from_page) %>% unlist() %>% unique()
-cat("Found", length(all_links), "documents\n")
+biden_links <- map(search_urls, get_presidency_links) %>% unlist() %>% unique()
+cat("Found", length(biden_links), "documents\n")
 
-scrape_document <- function(url) {
-  Sys.sleep(1)  
-  page <- read_html(url)
-  
-  title <- page %>% html_node("h1") %>% html_text(trim = TRUE)
-  date <- page %>% html_node(".date-display-single") %>% html_text(trim = TRUE)
-  text <- page %>% html_node(".field-docs-content") %>% html_text(trim = TRUE)
-  
-  tibble(
-    speaker = "Joe Biden",
-    date = date,
-    title = title,
-    text = text,
-    url = url)}
+# Scraping 
 
-biden_ukraine_docs <- map_dfr(all_links, scrape_document)
-write_csv(biden_ukraine_docs, "data/us_ukraine_biden_docs.csv")
+biden_docs <- batch_scrape(biden_links, scrape_presidency_doc, speaker = "Joe Biden")
+write_csv(biden_docs, "data/us_ukraine_biden_docs.csv")
 
-biden_ukraine <- biden_ukraine_docs %>%
+# Filtering for documents mentioning Ukraine 
+
+biden_ukraine <- biden_docs %>%
   filter(str_detect(str_to_lower(text), "ukrain"))
-write_csv(biden_ukraine, "data/us_ukraine_biden.csv")
-print(biden_ukraine)
 
+# Save and preview
 
+save_and_preview(biden_ukraine, "data/us_ukraine_biden.csv")
 
-# Blinken on Ukraine
+# Blinken 
 
 blinken_urls <- c(
   "https://web.archive.org/web/20250215064359/https://2021-2025.state.gov/secretary-blinken-and-secretary-austins-travel-to-ukraine/",
@@ -428,40 +362,17 @@ blinken_urls <- c(
   "https://web.archive.org/web/20250212083940/https://2021-2025.state.gov/russias-strategic-failure-and-ukraines-secure-future/",
   "https://web.archive.org/web/20250403171930/https://2021-2025.state.gov/secretary-antony-j-blinken-remarks-to-the-press-31/")
 
-scrape_blinken <- function(url) {
-  Sys.sleep(2) 
-  
-  tryCatch({
-    page <- read_html(url)
-    
-    title <- page %>% html_node("title") %>% html_text(trim = TRUE)
-    
-    text <- page %>%
-      html_nodes("p") %>%
-      html_text(trim = TRUE) %>%
-      paste(collapse = "\n\n")
-    
-    tibble(
-      speaker = "Antony Blinken",
-      date = NA_character_,
-      title = title,
-      text = text,
-      url = url)}, 
-    error = function(e) {
-      message("Failed on: ", url)
-      tibble()})}
+blinken_data <- batch_scrape(blinken_urls, scrape_wayback_doc, speaker = "Antony Blinken")
 
-blinken_data <- map_dfr(blinken_urls, scrape_blinken)
+# Filter by keyword
 
 blinken_ukraine <- blinken_data %>%
   filter(str_detect(str_to_lower(text), "ukrain"))
 
-write_csv(blinken_ukraine, "data/us_ukraine_blinken.csv")
-print(blinken_ukraine)
+# Save and preview
+save_and_preview(blinken_ukraine, "data/us_ukraine_blinken.csv")
 
-
-
-# Trump on Ukraine
+# Trump
 
 trump_urls <- c(
   "https://time.com/7280114/donald-trump-2025-interview-transcript/",
@@ -472,82 +383,51 @@ trump_urls <- c(
 
 #the Presidency Project contains a vast amount of data even for this 2nd term period, focused here on a few key ones
 
-scrape_trump <- function(url) {
-  Sys.sleep(1.5)
-  
-  tryCatch({
-    page <- read_html(url)
-    title <- page %>% html_node("title") %>% 
-      html_text(trim=TRUE)
-    
-    text <- page %>% html_nodes("p") %>% 
-      html_text(trim=TRUE) %>% 
-      paste(collapse="\n\n")
-    
-    tibble(speaker="Donald Trump", date=NA_character_, title, text, url)}, 
-    error = function(e) {message("Failed:", url); tibble()})}
+trump_docs <- batch_scrape(trump_urls, scrape_generic_doc, speaker = "Donald Trump")
 
-trump_ukraine <- map_dfr(trump_urls, scrape_trump) %>%
+# Filter for Ukraine-related content
+
+trump_ukraine <- trump_docs %>%
   filter(str_detect(str_to_lower(text), "ukrain"))
-write_csv(trump_ukraine, "data/us_ukraine_trump.csv")
-head(trump_ukraine) 
 
+# Save and preview
 
+save_and_preview(trump_ukraine, "data/us_ukraine_trump.csv")
 
-# Rubio on Ukraine
+# Rubio
 
 rubio_urls <- c(
-  "hhttps://web.archive.org/web/20250624041218/https://www.state.gov/secretary-marco-rubio-with-megyn-kelly-of-the-megyn-kelly-show/",
+  "https://web.archive.org/web/20250624041218/https://www.state.gov/secretary-marco-rubio-with-megyn-kelly-of-the-megyn-kelly-show/",
   "https://web.archive.org/web/20250407030340/https://www.state.gov/secretary-of-state-marco-rubio-with-george-stephanopoulos-of-abc-this-week/",
   "hhttps://web.archive.org/web/20250427175627/ttps://www.state.gov/releases/office-of-the-spokesperson/2025/04/interview-secretary-of-state-marco-rubio-with-kristen-welker-of-nbc-meet-the-press/",
   "https://web.archive.org/web/20250428084345/https://www.state.gov/secretary-of-state-marco-rubio-with-kaitlan-collins-of-cnn/",
   "https://web.archive.org/web/20250711095736/https://www.state.gov/releases/office-of-the-spokesperson/2025/07/secretary-of-state-marco-rubios-remarks-to-the-press-at-the-kuala-lumpur-convention-center")
 
-scrape_rubio <- function(url) {
-  Sys.sleep(1.5)
-  
-  tryCatch({
-    page <- read_html(url)
-    title <- page %>% html_node("title") %>% html_text(trim = TRUE)
-    text <- page %>% html_nodes("p") %>% html_text(trim = TRUE) %>% paste(collapse = "\n\n")
-    tibble(speaker = "Marco Rubio", date = NA_character_, title, text, url)}, 
-    error = function(e) {
-      message("ailed on: ", url)
-      tibble()})}
+rubio_data <- batch_scrape(rubio_urls, scrape_wayback_doc, speaker = "Marco Rubio")
 
-rubio_data <- map_dfr(rubio_urls, scrape_rubio)
+# Filter for Ukraine content
 
 rubio_ukraine <- rubio_data %>%
   filter(str_detect(str_to_lower(text), "ukrain"))
 
-write_csv(rubio_ukraine, "data/us_ukraine_rubio.csv")
-print(rubio_ukraine)
+# Save and preview
 
+save_and_preview(rubio_ukraine, "data/us_ukraine_rubio.csv")
 
+# US - Ukraine dataset combining
 
-# US - Ukraine
+us_ukraine_files <- c(
+  "data/us_ukraine_biden.csv",
+  "data/us_ukraine_blinken.csv",
+  "data/us_ukraine_trump.csv",
+  "data/us_ukraine_rubio.csv"
+)
 
-biden <- read_csv("data/us_ukraine_biden.csv") %>%
-  mutate(date = as.character(date))
+us_ukraine <- combine_and_save(us_ukraine_files, "data/us_ukraine.csv")
 
-blinken <- read_csv("data/us_ukraine_blinken.csv") %>%
-  mutate(date = as.character(date))
+# 4. Russian Politicians on Ukraine
 
-trump <- read_csv("data/us_ukraine_trump.csv") %>%
-  mutate(date = as.character(date))
-
-rubio <- read_csv("data/us_ukraine_rubio.csv") %>%
-  mutate(date = as.character(date))
-
-us_ukraine <- bind_rows(biden, blinken, trump, rubio)
-write_csv(us_ukraine, "data/us_ukraine.csv")
-
-
-
-# 4. Russia - Ukraine
-
-
-# Putin on Ukraine
+# Putin
 
 putin_urls <- c(
   "https://web.archive.org/web/20250418013820/http://kremlin.ru/catalog/countries/UA/events/67825",
@@ -562,47 +442,25 @@ putin_urls <- c(
   "https://web.archive.org/web/20250428012051/http://kremlin.ru/catalog/countries/UA/events/76446",
   "https://web.archive.org/web/20250522170426/http://kremlin.ru/catalog/countries/UA/events/76600")
 
-scrape_putin <- function(url) {
-  Sys.sleep(1.5)
-  
-  tryCatch({
-    page <- read_html(url)
-    title <- page %>% html_node("title") %>% html_text(trim = TRUE)
-    text <- page %>% html_nodes("p") %>% html_text(trim = TRUE) %>% paste(collapse = "\n\n")
-    
-    tibble(
-      speaker = "Vladimir Putin",
-      date = NA_character_,
-      title = title,
-      text = text,
-      url = url)}, 
-    error = function(e) {
-      message("Failed to scrape: ", url)
-      return(tibble(
-        speaker = "Vladimir Putin",
-        date = NA_character_,
-        title = NA_character_,
-        text = NA_character_,
-        url = url))})}
+putin_all <- batch_scrape(putin_urls, scrape_wayback_doc, speaker = "Vladimir Putin")
 
-putin_all <- map_dfr(putin_urls, scrape_putin)
-
-write_csv(putin_all, "putin_raw.csv")
+# Removing documents with empty or NA text
 
 putin_clean <- putin_all %>%
   filter(!is.na(text) & str_trim(text) != "")
 
-keywords_pattern <- "украин|донбас|луганск|днр|лнр|киев|запорож|херсон"
+# Filtering for Ukraine-related terms in Russian
+
+ukraine_keywords_ru <- "украин|донбас|луганск|днр|лнр|киев|запорож|херсон"
 
 putin_ukraine <- putin_clean %>%
-  filter(str_detect(str_to_lower(text), keywords_pattern))
+  filter(str_detect(str_to_lower(text), ukraine_keywords_ru))
 
-write_csv(putin_ukraine, "data/russia_ukraine_putin.csv")
-print(putin_ukraine)  
+# Save and preview
 
+save_and_preview(putin_ukraine, "data/russia_ukraine_putin.csv")
 
-
-# Lavrov on Ukraine
+# Lavrov
 
 lavrov_urls <- c(
   "https://web.archive.org/web/20250313164326/https://mid.ru/ru/foreign_policy/news/2002637",
@@ -611,85 +469,60 @@ lavrov_urls <- c(
   "https://web.archive.org/web/20220709113647/https://www.mid.ru/ru/foreign_policy/news/1821243/",
   "https://web.archive.org/web/20221127042304/https://www.mid.ru/ru/foreign_policy/news/1840230/")
 
-scrape_lavrov <- function(url) {
-  Sys.sleep(1.5)  
-  
-  tryCatch({
-    page <- read_html(url)
-    
-    title <- page %>%
-      html_node("title") %>%
-      html_text(trim = TRUE)
-    
-    text <- page %>%
-      html_nodes("p") %>%
-      html_text(trim = TRUE) %>%
-      paste(collapse = "\n\n")
-    
-    tibble(
-      speaker = "Sergey Lavrov",
-      date = NA_character_,  # Date parsing could be added later
-      title = title,
-      text = text,
-      url = url)}, 
-    error = function(e) {
-      message("Failed to scrape: ", url)
-      tibble(
-        speaker = "Sergey Lavrov",
-        date = NA_character_,
-        title = NA_character_,
-        text = NA_character_,
-        url = url)})}
+lavrov_all <- batch_scrape(lavrov_urls, scrape_wayback_doc, speaker = "Sergey Lavrov")
 
-lavrov_all <- map_dfr(lavrov_urls, scrape_lavrov)
-
-write_csv(lavrov_all, "lavrov_all_raw.csv")
+# Filtering empty entries
 
 lavrov_clean <- lavrov_all %>%
   filter(!is.na(text) & str_trim(text) != "")
 
-keywords <- "украин|донбас|луганск|днр|лнр|киев|запорож|херсон"
+# Filtering for Ukraine-related keywords (Russian)
 
 lavrov_ukraine <- lavrov_clean %>%
-  filter(str_detect(str_to_lower(text), keywords))
+  filter(str_detect(str_to_lower(text), ukraine_keywords_ru))
 
-write_csv(lavrov_ukraine, "data/lavrov_ukraine.csv")
-print(lavrov_ukraine)
+# Save and preview
+
+save_and_preview(lavrov_ukraine, "data/lavrov_ukraine.csv")
 
 # combining scraped and manual Lavrov docs
 
 scraped <- read_csv("data/lavrov_ukraine.csv", col_types = cols(date = col_character()))
 manual <- read_csv("data/lavrov_ukraine_manual.csv", col_types = cols(date = col_character()))
 
-#since I was only able to scrape a limited amount of data, additional information was collected manually
+#Since I was able to scrape only a limited amount of data, additional information was collected manually
+
+# Loading both datasets
+
+scraped <- read_csv("data/lavrov_ukraine.csv", col_types = cols(date = col_character()))
+manual <- read_csv("data/lavrov_ukraine_manual.csv", col_types = cols(date = col_character()))
+
+# Getting full set of column names from both
 
 all_cols <- union(colnames(scraped), colnames(manual))
 
+# Adding missing columns and reordering
+
 scraped_full <- scraped %>%
-  bind_rows(tibble::as_tibble(matrix(NA, nrow = 0, ncol = length(setdiff(all_cols, colnames(scraped))))) %>%
-              setNames(setdiff(all_cols, colnames(scraped)))) %>%
+  mutate(across(setdiff(all_cols, colnames(scraped)), ~NA)) %>%
   select(all_of(all_cols))
 
 manual_full <- manual %>%
-  bind_rows(tibble::as_tibble(matrix(NA, nrow = 0, ncol = length(setdiff(all_cols, colnames(manual))))) %>%
-              setNames(setdiff(all_cols, colnames(manual)))) %>%
+  mutate(across(setdiff(all_cols, colnames(manual)), ~NA)) %>%
   select(all_of(all_cols))
 
+# Combining and saving
+
 lavrov_ukraine_combined <- bind_rows(scraped_full, manual_full)
-
 write_csv(lavrov_ukraine_combined, "data/lavrov_ukraine_combined.csv")
-head(lavrov_ukraine_combined)
 
 
-# Russia - Ukraine
+# Russia - Ukraine datasets combining
 
-putin <- read_csv("data/russia_ukraine_putin.csv", col_types = cols(date = col_character())) %>%
-  mutate(date = as.character(date))
+putin <- read_csv("data/russia_ukraine_putin.csv", col_types = cols(date = col_character()))
+lavrov <- read_csv("data/lavrov_ukraine_combined.csv", col_types = cols(date = col_character()))
 
-lavrov <- read_csv("data/lavrov_ukraine_combined.csv", col_types = cols(date = col_character())) %>%
-  mutate(date = as.character(date))
-
-russia_ukraine <- bind_rows(putin, lavrov)
+# Combine and save
 
 russia_ukraine <- bind_rows(putin, lavrov)
 write_csv(russia_ukraine, "data/russia_ukraine.csv")
